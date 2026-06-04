@@ -6,7 +6,9 @@
       "PowerShell(winget install *)",
       "PowerShell($word = New-Object -ComObject Word.Application -ErrorAction Stop; $word.Visible = $false; Write-Output \"Word OK version: $\\($word.Version\\)\"; $word.Quit\\(\\))",
       "PowerShell(& \"C:\\\\Program Files\\\\Git\\\\bin\\\\git.exe\" --version)",
-      "PowerShell(gh auth *)"
+      "PowerShell(gh auth *)",
+      "PowerShell(gh repo *)",
+      "PowerShell(git *)"
     ]
   }
 }
