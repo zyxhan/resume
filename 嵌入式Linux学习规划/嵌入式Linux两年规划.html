@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>嵌入式Linux两年学习规划</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"Microsoft YaHei","Segoe UI",sans-serif;background:#f0f2f5;color:#333;line-height:1.7}
+.sidebar{position:fixed;left:0;top:0;width:240px;height:100vh;background:#1a1a2e;color:#fff;overflow-y:auto;z-index:100}
+.sidebar h2{padding:24px 20px 12px;font-size:15px;color:#8892b0;border-bottom:1px solid #2a2a4a}
+.sidebar .logo{padding:20px;font-size:20px;font-weight:bold;border-bottom:1px solid #2a2a4a;text-align:center}
+.sidebar .logo span{color:#64ffda}
+.nav-item{display:block;padding:12px 20px;color:#ccd6f6;cursor:pointer;transition:.2s;border-left:3px solid transparent;font-size:14px}
+.nav-item:hover{background:#2a2a4a;color:#64ffda}
+.nav-item.active{background:#2a2a4a;color:#64ffda;border-left-color:#64ffda}
+.nav-item .phase{font-size:11px;color:#8892b0;display:block;margin-top:2px}
+.main{margin-left:240px;padding:40px 50px;max-width:900px}
+.main h1{font-size:28px;margin-bottom:8px;color:#1a1a2e}
+.main h2{font-size:22px;margin:32px 0 12px;color:#1a1a2e;border-bottom:2px solid #64ffda;padding-bottom:8px}
+.main h3{font-size:17px;margin:20px 0 8px;color:#2a2a4a}
+.subtitle{color:#666;font-size:15px;margin-bottom:24px}
+.card{background:#fff;border-radius:10px;padding:24px;margin:16px 0;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.card h3{margin-top:0}
+.tag{display:inline-block;padding:2px 10px;border-radius:12px;font-size:12px;margin:2px}
+.tag-must{background:#e6fffb;color:#0d9488;border:1px solid #99f6e4}
+.tag-recommend{background:#fef3c7;color:#b45309;border:1px solid #fde68a}
+.tag-bonus{background:#ede9fe;color:#7c3aed;border:1px solid #ddd6fe}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px}
+th{background:#1a1a2e;color:#fff;padding:10px 14px;text-align:left;font-weight:normal}
+td{padding:10px 14px;border-bottom:1px solid #e5e7eb}
+tr:hover td{background:#f8fafc}
+.checklist{list-style:none;padding:0}
+.checklist li{padding:8px 0 8px 28px;position:relative;border-bottom:1px solid #f0f0f0}
+.checklist li:before{content:"☐";position:absolute;left:0;color:#64ffda;font-size:18px}
+.checklist li.done:before{content:"☑";color:#10b981}
+.timeline{display:flex;flex-direction:column;gap:0;margin:20px 0}
+.tl-item{display:flex;align-items:stretch}
+.tl-left{width:100px;text-align:right;padding:8px 12px;font-weight:bold;color:#64ffda;font-size:13px}
+.tl-line{width:3px;background:#e5e7eb;position:relative}
+.tl-line::before{content:"";width:12px;height:12px;background:#64ffda;border-radius:50%;position:absolute;left:-4.5px;top:12px}
+.tl-right{flex:1;padding:8px 16px;font-size:14px}
+.progress-bar{height:8px;background:#e5e7eb;border-radius:4px;margin:8px 0}
+.progress-fill{height:100%;background:linear-gradient(90deg,#64ffda,#0d9488);border-radius:4px}
+.info-box{background:#f0fdfa;border-left:4px solid #0d9488;padding:14px 18px;margin:12px 0;border-radius:0 8px 8px 0;font-size:14px}
+.warn-box{background:#fffbeb;border-left:4px solid #f59e0b;padding:14px 18px;margin:12px 0;border-radius:0 8px 8px 0;font-size:14px}
+code{background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:13px;color:#e11d48}
+pre{background:#1e293b;color:#e2e8f0;padding:16px;border-radius:8px;overflow-x:auto;font-size:13px;margin:10px 0;line-height:1.6}
+.section{display:none}
+.section.active{display:block}
+.badge{display:inline-block;background:#64ffda;color:#1a1a2e;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:bold;margin:4px}
+@media(max-width:768px){.sidebar{width:60px}.sidebar .logo,.nav-item .phase,.sidebar h2{display:none}.nav-item{padding:12px;text-align:center;font-size:12px}.main{margin-left:60px;padding:20px}}
+</style>
+</head>
+<body>
+<div class="sidebar">
+<div class="logo">嵌入式<span>Linux</span>规划</div>
+<h2>导航</h2>
+<div class="nav-item active" onclick="show(0)">📋 总览<span class="phase">时间线·预算·里程碑</span></div>
+<div class="nav-item" onclick="show(1)">① C语言+Linux入门<span class="phase">2026暑假 · 8周</span></div>
+<div class="nav-item" onclick="show(2)">② 数据结构+系统编程<span class="phase">大二上 · 5个月</span></div>
+<div class="nav-item" onclick="show(3)">③ STM32+RTOS<span class="phase">大二寒假 · 5周</span></div>
+<div class="nav-item" onclick="show(4)">④ 网络编程+单片机<span class="phase">大二下 · 5个月</span></div>
+<div class="nav-item" onclick="show(5)">⑤ 嵌入式Linux核心<span class="phase">大二暑假 · 8周</span></div>
+<div class="nav-item" onclick="show(6)">⑥ 驱动+C+++项目<span class="phase">大三上 · 5个月</span></div>
+<div class="nav-item" onclick="show(7)">⑦ 实习冲刺<span class="phase">大三下 · 面试投递</span></div>
+</div>
+<div class="main">
+
+<!-- ===== 总览 ===== -->
+<div class="section active" id="s0">
+<h1>嵌入式Linux两年学习规划</h1>
+<p class="subtitle">目标：大三暑假（2028年7月）拿到大厂嵌入式实习offer</p>
+
+<div class="card">
+<h3>🎯 基本信息</h3>
+<table>
+<tr><td><strong>起点</strong></td><td>大一暑假（2026年7月），C语言刚入门，零基础硬件</td></tr>
+<tr><td><strong>目标</strong></td><td>字节跳动/海康威视/大疆 嵌入式实习offer</td></tr>
+<tr><td><strong>时间投入</strong></td><td>学期每天1-2小时，寒暑假每天4-6小时</td></tr>
+<tr><td><strong>总预算</strong></td><td>500-800元（开发板+传感器）</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h3>⏱ 时间线</h3>
+<div class="timeline">
+<div class="tl-item"><div class="tl-left">2026暑假</div><div class="tl-line"></div><div class="tl-right"><strong>C语言进阶 + Linux入门</strong><br>指针/内存/链表 → WSL2环境 → Makefile → GitHub</div></div>
+<div class="tl-item"><div class="tl-left">大二上</div><div class="tl-line"></div><div class="tl-right"><strong>数据结构 + Linux系统编程</strong><br>哈希表/队列 → 进程/管道/信号 → Shell解释器项目</div></div>
+<div class="tl-item"><div class="tl-left">大二寒假</div><div class="tl-line"></div><div class="tl-right"><strong>STM32 + FreeRTOS</strong> ⭐黄金期<br>GPIO/UART/I2C → 温湿度项目 → FreeRTOS多任务</div></div>
+<div class="tl-item"><div class="tl-left">大二下</div><div class="tl-line"></div><div class="tl-right"><strong>网络编程 + 单片机进阶</strong><br>Socket/epoll → HTTP服务器 → ADC/DMA</div></div>
+<div class="tl-item"><div class="tl-left">大二暑假</div><div class="tl-line"></div><div class="tl-right"><strong>嵌入式Linux核心</strong><br>U-Boot → 内核编译 → 设备树 → Buildroot → IMX6ULL</div></div>
+<div class="tl-item"><div class="tl-left">大三上</div><div class="tl-line"></div><div class="tl-right"><strong>驱动开发 + C++基础 + 综合项目</strong><br>字符设备驱动 → 虚函数表 → 智能家居网关</div></div>
+<div class="tl-item"><div class="tl-left">大三下</div><div class="tl-line"></div><div class="tl-right"><strong>实习冲刺</strong><br>简历 → 八股文 → LeetCode → 投递面试</div></div>
+</div>
+</div>
+
+<div class="card">
+<h3>📊 优先级</h3>
+<table>
+<tr><th>优先级</th><th>占比</th><th>内容</th></tr>
+<tr><td><span class="tag tag-must">必做</span></td><td>80%</td><td>C进阶→Linux编程→STM32→嵌入式Linux→驱动→综合项目</td></tr>
+<tr><td><span class="tag tag-recommend">尽量做</span></td><td>15%</td><td>FreeRTOS、C++基础、LeetCode刷题</td></tr>
+<tr><td><span class="tag tag-bonus">有更好</span></td><td>5%</td><td>竞赛（蓝桥杯）、GitHub开源贡献、技术博客</td></tr>
+</table>
+<div class="info-box">不用全做完，把"必做"做扎实就有竞争力了。</div>
+</div>
+
+<div class="card">
+<h3>✅ 里程碑</h3>
+<ul class="checklist">
+<li>2026年9月：C语言进阶完成，Linux下独立写200行+程序</li>
+<li>2027年1月：Shell解释器完成，LeetCode 50题</li>
+<li>2027年2月：STM32 + FreeRTOS入门完成</li>
+<li>2027年7月：HTTP服务器完成，单片机进阶完成</li>
+<li>2028年1月：2-3个完整项目 + 驱动基础 + C++基础</li>
+<li>2028年7月：拿到实习offer 🎉</li>
+</ul>
+</div>
+
+<div class="card">
+<h3>⚠️ 核心避坑</h3>
+<div class="warn-box">1. 不要一上来买开发板，先打好C和Linux软件基础</div>
+<div class="warn-box">2. 寒假是超车道，别浪费，连续4-6小时效率远超碎片时间</div>
+<div class="warn-box">3. 做透一个项目 > 做三个半成品</div>
+<div class="warn-box">4. GPA保持前30%，有些公司卡绩点</div>
+<div class="warn-box">5. GitHub从暑假开始推代码，两年后就是你的简历</div>
+<div class="warn-box">6. 卡住超过2小时就问，别死磕</div>
+</div>
+
+<div class="card">
+<h3>💰 预算</h3>
+<table>
+<tr><th>时间</th><th>物品</th><th>预算</th></tr>
+<tr><td>大二寒假前（12月）</td><td>STM32最小系统板+ST-Link+传感器</td><td>50-100元</td></tr>
+<tr><td>大二暑假</td><td>IMX6ULL开发板</td><td>400-600元</td></tr>
+<tr><td>大三上（可选）</td><td>WiFi/MQTT扩展模块</td><td>50-100元</td></tr>
+<tr><td colspan="2"><strong>总计</strong></td><td><strong>500-800元</strong></td></tr>
+</table>
+</div>
+</div>
+
+<!-- ===== 第一阶段 ===== -->
+<div class="section" id="s1">
+<h1>第一阶段：C语言进阶 + Linux入门</h1>
+<p class="subtitle">2026年暑假（7-8月）· 每天4-6小时 · 共8周</p>
+
+<div class="card">
+<h3>📅 安排</h3>
+<table><tr><th>周次</th><th>内容</th><th>重点</th></tr>
+<tr><td>第1-4周</td><td>C语言进阶</td><td>指针、内存、链表、多文件编译</td></tr>
+<tr><td>第5-8周</td><td>Linux入门</td><td>命令行、Makefile、Shell脚本</td></tr></table>
+</div>
+
+<div class="card">
+<h3>Task 1：C语言进阶 <span class="tag tag-must">必做</span></h3>
+<p><strong>核心突破点：</strong></p>
+<ul>
+<li><strong>指针</strong>：多级指针、函数指针、指针数组 vs 数组指针</li>
+<li><strong>内存管理</strong>：malloc/free、内存泄漏、野指针、悬空指针</li>
+<li><strong>结构体与链表</strong>：内存对齐、单/双向链表、循环链表</li>
+<li><strong>位操作</strong>：设置/清除/翻转某一位（嵌入式高频考点）</li>
+<li><strong>多文件编译</strong>：extern、static、编译链接过程</li>
+</ul>
+<p><strong>推荐</strong>：《C和指针》+ B站翁恺C语言进阶</p>
+<h3>🔨 项目：通讯录管理系统</h3>
+<pre>功能要求：
+├── 联系人增删改查（用链表实现）
+├── 数据持久化（文件读写存储）
+├── 多文件组织（main.c / contact.c / file.c）
+└── 可扩展：排序、搜索、分类</pre>
+</div>
+
+<div class="card">
+<h3>Task 2：Linux环境搭建 <span class="tag tag-must">必做</span></h3>
+<ul>
+<li>安装 <strong>WSL2 + Ubuntu 22.04</strong></li>
+<li>核心命令：<code>ls</code> <code>cd</code> <code>grep</code> <code>find</code> <code>gcc</code> <code>make</code> <code>vim</code></li>
+<li><strong>Makefile</strong>：从单文件到多文件，变量、通配符、伪目标</li>
+<li><strong>Shell脚本</strong>：变量、条件、循环</li>
+</ul>
+<h3>🔨 项目：移植通讯录到Linux</h3>
+<pre>任务：
+├── 在Linux下编译运行通讯录管理系统
+├── 编写完整Makefile
+├── 写build.sh一键编译+运行+清理
+└── 体验完整Linux开发流程</pre>
+</div>
+
+<div class="card">
+<h3>Task 3：GitHub习惯 <span class="tag tag-bonus">有更好</span></h3>
+<p>注册GitHub，每天推代码。坚持两年，commit记录就是你的简历。</p>
+</div>
+
+<div class="card">
+<h3>✅ 阶段检验</h3>
+<ul class="checklist">
+<li>手写双向链表增删改查（不看资料）</li>
+<li>解释 <code>char *p</code> vs <code>char **p</code> vs <code>char (*p)[10]</code></li>
+<li>Linux下用vim+gcc+Makefile完成项目</li>
+<li>写Shell脚本自动化构建流程</li>
+<li>解释内存泄漏原理</li>
+</ul>
+</div>
+</div>
+
+<!-- ===== 第二阶段 ===== -->
+<div class="section" id="s2">
+<h1>第二阶段：数据结构 + Linux系统编程</h1>
+<p class="subtitle">大二上学期（2026年9月-2027年1月）· 每天1-2小时</p>
+
+<div class="card">
+<h3>📅 安排</h3>
+<table><tr><th>月份</th><th>内容</th><th>优先级</th></tr>
+<tr><td>9月-11月</td><td>数据结构</td><td><span class="tag tag-must">必做</span></td></tr>
+<tr><td>11月-1月</td><td>Linux系统编程</td><td><span class="tag tag-must">必做</span></td></tr>
+<tr><td>贯穿全程</td><td>LeetCode刷题</td><td><span class="tag tag-recommend">尽量做</span></td></tr></table>
+<div class="warn-box">12月底提前网购STM32开发板（50-100元），寒假到货即用！</div>
+</div>
+
+<div class="card">
+<h3>Task 1：数据结构 <span class="tag tag-must">必做</span></h3>
+<p><strong>必须手写实现：</strong>链表、栈、队列、哈希表、二叉树、堆</p>
+<p><strong>推荐</strong>：B站浙大数据结构（陈越）+ 《数据结构（C语言版）》严蔚敏</p>
+<h3>🔨 项目：手写哈希表 + 任务调度队列</h3>
+</div>
+
+<div class="card">
+<h3>Task 2：Linux系统编程 <span class="tag tag-must">必做</span></h3>
+<ul>
+<li><strong>文件IO</strong>：open/read/write/lseek/close、文件描述符本质</li>
+<li><strong>进程</strong>：fork（写时复制）、exec、wait、僵尸/孤儿进程</li>
+<li><strong>IPC</strong>：管道、共享内存、消息队列、信号</li>
+<li><strong>线程</strong>：pthread、互斥锁、条件变量</li>
+</ul>
+<h3>🔨 项目：简易Shell解释器 ⭐</h3>
+<pre>功能：
+├── 内置命令：cd、exit、help
+├── 外部命令执行（fork + exec）
+├── 管道：ls | grep txt
+├── 重定向：ls > output.txt
+├── 后台执行：sleep 10 &
+└── 信号处理：Ctrl+C不退出</pre>
+<div class="info-box">字节面经考点：文件描述符是什么？进程间通信方法？fork原理？</div>
+</div>
+
+<div class="card">
+<h3>✅ 阶段检验</h3>
+<ul class="checklist">
+<li>手写双向链表、栈、队列、哈希表</li>
+<li>解释fork执行过程，画父子进程图</li>
+<li>Shell解释器能处理 <code>ls -l | grep txt > out.txt</code></li>
+<li>LeetCode累计50题</li>
+</ul>
+</div>
+</div>
+
+<!-- ===== 第三阶段 ===== -->
+<div class="section" id="s3">
+<h1>第三阶段：STM32 + RTOS入门</h1>
+<p class="subtitle">大二寒假（2027年1月-2月）· 每天4-6小时 · ⭐黄金期</p>
+
+<div class="card">
+<h3>🛒 购物清单（12月底买）</h3>
+<table><tr><th>物品</th><th>价格</th></tr>
+<tr><td>STM32F103C8T6最小系统板</td><td>~20元</td></tr>
+<tr><td>ST-Link V2调试器</td><td>~15元</td></tr>
+<tr><td>杜邦线+面包板</td><td>~10元</td></tr>
+<tr><td>DHT11温湿度传感器</td><td>~3元</td></tr>
+<tr><td>0.96寸OLED屏（I2C）</td><td>~8元</td></tr>
+<tr><td colspan="2"><strong>总计约60元</strong></td></tr></table>
+</div>
+
+<div class="card">
+<h3>Task 1：STM32入门（前3周）<span class="tag tag-must">必做</span></h3>
+<p>跟着正点原子/野火视频学：GPIO → UART串口 → 定时器 → 中断 → I2C → SPI</p>
+<h3>🔨 项目：串口调试助手 + 温湿度监测系统</h3>
+<pre>温湿度系统：
+├── DHT11定时采集
+├── OLED实时显示
+├── 串口上报到PC
+└── 温度超阈值报警</pre>
+</div>
+
+<div class="card">
+<h3>Task 2：FreeRTOS入门（后2周）<span class="tag tag-recommend">尽量做</span></h3>
+<p>核心：任务创建 → 信号量 → 队列 → 互斥锁 → 任务通知</p>
+<h3>🔨 项目：多任务温湿度系统</h3>
+<pre>3个任务：
+├── 采集任务：读DHT11，写入队列
+├── 显示任务：从队列读数据，刷新OLED
+└── 报警任务：监测温度，触发蜂鸣器</pre>
+<div class="info-box">字节面试考了"FreeRTOS任务通知原理"</div>
+</div>
+
+<div class="card">
+<h3>✅ 阶段检验</h3>
+<ul class="checklist">
+<li>独立接线烧录LED闪烁程序</li>
+<li>串口双向通信</li>
+<li>解释I2C协议（起始信号、地址帧、应答）</li>
+<li>FreeRTOS 3个任务+队列通信</li>
+<li>温湿度系统完整运行</li>
+</ul>
+</div>
+</div>
+
+<!-- ===== 第四阶段 ===== -->
+<div class="section" id="s4">
+<h1>第四阶段：网络编程 + 单片机进阶</h1>
+<p class="subtitle">大二下学期（2027年2月-7月）· 每天1-2小时</p>
+
+<div class="card">
+<h3>📅 时间分配</h3>
+<div class="progress-bar"><div class="progress-fill" style="width:70%"></div></div>
+<p>网络编程（主线）70% ｜ 单片机进阶（副线）30%</p>
+</div>
+
+<div class="card">
+<h3>Task 1：网络编程 <span class="tag tag-must">必做</span></h3>
+<ul>
+<li><strong>基础</strong>：TCP/UDP区别、三次握手/四次挥手、字节序</li>
+<li><strong>Socket</strong>：TCP/UDP Socket编程、阻塞vs非阻塞IO</li>
+<li><strong>IO多路复用</strong>：select → poll → <strong>epoll</strong>（面试高频）</li>
+<li><strong>多线程</strong>：每连接一线程 vs 线程池</li>
+</ul>
+<h3>🔨 项目：多线程HTTP服务器 ⭐</h3>
+<pre>基础版：监听端口 → 解析HTTP → 返回静态文件
+进阶版：epoll + 非阻塞IO + 高并发 + 超时处理</pre>
+<div class="info-box">字节面经：TCP和UDP特点？epoll和select区别？</div>
+</div>
+
+<div class="card">
+<h3>Task 2：单片机进阶 <span class="tag tag-must">必做</span></h3>
+<p>ADC/DAC → DMA → PWM进阶（电机调速+编码器）</p>
+<h3>🔨 项目：多传感器数据采集系统</h3>
+<pre>多路ADC采集 → DMA高速传输 → 数据滤波 → 串口DMA上传 → OLED显示</pre>
+</div>
+
+<div class="card">
+<h3>✅ 阶段检验</h3>
+<ul class="checklist">
+<li>手写TCP Server接受多客户端</li>
+<li>画TCP三次握手过程</li>
+<li>HTTP服务器返回静态页面</li>
+<li>epoll处理100+并发</li>
+<li>DMA + ADC多通道采样</li>
+</ul>
+</div>
+</div>
+
+<!-- ===== 第五阶段 ===== -->
+<div class="section" id="s5">
+<h1>第五阶段：嵌入式Linux核心</h1>
+<p class="subtitle">大二暑假（2027年7月-8月）· 每天4-6小时</p>
+
+<div class="info-box">从零构建完整嵌入式Linux系统：上电 → U-Boot → 内核 → 文件系统 → 应用</div>
+
+<div class="card">
+<h3>🛒 硬件准备</h3>
+<p><strong>正点原子IMX6ULL开发板</strong>（400-600元）—— 资料最全，社区活跃<br>
+预算有限可用QEMU虚拟机模拟（体验差一些）</p>
+</div>
+
+<div class="card">
+<h3>8周安排 <span class="tag tag-must">全必做</span></h3>
+<table><tr><th>周次</th><th>内容</th></tr>
+<tr><td>1-2周</td><td>交叉编译工具链 + U-Boot编译烧录</td></tr>
+<tr><td>3-4周</td><td>内核编译（make menuconfig）+ 设备树DTS</td></tr>
+<tr><td>5-6周</td><td>根文件系统构建（Buildroot + 手动构建）</td></tr>
+<tr><td>7-8周</td><td>应用层开发 + 完整系统调试</td></tr></table>
+<h3>🔨 项目：开发板LED控制程序</h3>
+<pre>设备树配置LED GPIO → 应用层控制 → 闪烁/呼吸灯 → 命令行交互</pre>
+</div>
+
+<div class="card">
+<h3>✅ 阶段检验</h3>
+<ul class="checklist">
+<li>解释交叉编译和本地编译区别</li>
+<li>修改U-Boot启动参数</li>
+<li>make menuconfig裁剪内核</li>
+<li>修改设备树添加硬件描述</li>
+<li>Buildroot构建最小文件系统</li>
+<li>完整走一遍启动流程并能讲清楚</li>
+</ul>
+</div>
+</div>
+
+<!-- ===== 第六阶段 ===== -->
+<div class="section" id="s6">
+<h1>第六阶段：驱动开发 + C++基础 + 项目</h1>
+<p class="subtitle">大三上学期（2027年9月-2028年1月）· 每天1-2小时</p>
+
+<div class="card">
+<h3>Task 1：Linux驱动入门（9-11月）<span class="tag tag-must">必做</span></h3>
+<ul>
+<li><strong>字符设备驱动</strong>：cdev注册、file_operations、copy_to_user</li>
+<li><strong>Platform总线</strong>：驱动与设备分离、匹配机制</li>
+<li><strong>子系统</strong>：GPIO/I2C/Input子系统驱动</li>
+<li><strong>中断处理</strong>：顶半部/底半部（tasklet/workqueue）</li>
+</ul>
+<h3>🔨 项目：按键驱动 + I2C传感器驱动</h3>
+<div class="info-box">字节BSP驱动岗要求：Linux内核源码、UART/I2C/SPI、示波器/逻辑分析仪</div>
+</div>
+
+<div class="card">
+<h3>Task 2：C++基础（11-12月，2周速成）<span class="tag tag-recommend">尽量做</span></h3>
+<ul>
+<li>类与对象、继承、<strong>虚函数虚表原理</strong>（字节考点）</li>
+<li>STL基础：vector/map/string</li>
+<li>用C++重写一个小项目练习</li>
+</ul>
+</div>
+
+<div class="card">
+<h3>Task 3：综合项目（12-1月）<span class="tag tag-must">必做</span></h3>
+<h3>⭐ 推荐：智能家居网关</h3>
+<pre>┌──────────┐  MQTT  ┌───────────┐  HTTP  ┌────────┐
+│  STM32   │ ──────→│  IMX6ULL  │ ──────→│  手机  │
+│ 传感器   │  WiFi  │ Linux网关 │        │  查看  │
+└──────────┘        └───────────┘        └────────┘
+
+技术栈：FreeRTOS + MQTT + 驱动 + 网络编程 + 数据处理</pre>
+</div>
+
+<div class="card">
+<h3>✅ 阶段检验</h3>
+<ul class="checklist">
+<li>手写字符设备驱动</li>
+<li>解释Platform总线模型</li>
+<li>解释中断分段原理</li>
+<li>画虚函数表工作原理图</li>
+<li>综合项目推送到GitHub</li>
+</ul>
+</div>
+</div>
+
+<!-- ===== 第七阶段 ===== -->
+<div class="section" id="s7">
+<h1>第七阶段：实习冲刺</h1>
+<p class="subtitle">大三下学期（2028年2月-7月）· 目标：拿到offer</p>
+
+<div class="card">
+<h3>📋 简历准备（2月）</h3>
+<ul>
+<li>GitHub精选2-3个项目，写好README</li>
+<li>技术栈：C/C++ + Linux系统编程 + 嵌入式Linux + STM32+FreeRTOS + 网络编程</li>
+<li>项目：智能家居网关、HTTP服务器、Shell解释器</li>
+<li>不要写"精通"，写"熟悉"/"掌握"</li>
+</ul>
+</div>
+
+<div class="card">
+<h3>📚 八股文重点（2-3月）</h3>
+<table><tr><th>方向</th><th>高频考点</th></tr>
+<tr><td><strong>C语言 P0</strong></td><td>指针、volatile、static、结构体对齐、宏副作用、函数指针</td></tr>
+<tr><td><strong>操作系统 P0</strong></td><td>进程vs线程、调度算法、内存管理、文件描述符、死锁</td></tr>
+<tr><td><strong>Linux内核 P1</strong></td><td>IPC方法、DMA内存、Cache一致性、中断分段</td></tr>
+<tr><td><strong>RTOS P1</strong></td><td>FreeRTOS任务通知、中断分段原理</td></tr>
+<tr><td><strong>网络 P1</strong></td><td>TCP vs UDP、三次握手、epoll vs select</td></tr>
+<tr><td><strong>数据结构 P1</strong></td><td>堆vs栈、数组vs链表、环形缓冲区</td></tr></table>
+<div class="info-box">推荐：牛客网嵌入式面经 + 小林coding（图解网络/操作系统）</div>
+</div>
+
+<div class="card">
+<h3>🎯 投递策略（3-7月）</h3>
+<table><tr><th>梯队</th><th>公司</th><th>时间</th></tr>
+<tr><td>第三梯队（练手）</td><td>比亚迪、蔚来、理想、美的</td><td>3月初</td></tr>
+<tr><td>第二梯队</td><td>大华、全志、瑞芯微、紫光展锐</td><td>3月底-4月</td></tr>
+<tr><td>第一梯队</td><td><strong>字节跳动</strong>、大疆、海康、中兴</td><td>4月-5月</td></tr></table>
+<p><strong>每次面试后</strong>：记录问题 → 分析薄弱点 → 针对性补强</p>
+</div>
+
+<div class="card">
+<h3>字节跳动嵌入式岗匹配度</h3>
+<table><tr><th>岗位</th><th>匹配度</th><th>说明</th></tr>
+<tr><td>嵌入式开发实习生-移动OS</td><td>⭐⭐⭐⭐⭐</td><td>最匹配你的技术栈</td></tr>
+<tr><td>BSP驱动开发实习生-移动OS</td><td>⭐⭐⭐⭐</td><td>偏驱动，智能家居网关完美契合</td></tr>
+<tr><td>机器人嵌入式软件实习-Seed</td><td>⭐⭐⭐</td><td>需要ROS，竞争较大</td></tr></table>
+</div>
+
+<div class="card">
+<h3>✅ 最终检验</h3>
+<ul class="checklist">
+<li>简历完成 + GitHub整理</li>
+<li>八股文每个方向能答5题+</li>
+<li>LeetCode累计80题+</li>
+<li>至少完成3次面试</li>
+<li>拿到实习offer 🎉</li>
+</ul>
+</div>
+</div>
+
+</div>
+
+<script>
+function show(n){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(s=>s.classList.remove('active'));
+  document.getElementById('s'+n).classList.add('active');
+  document.querySelectorAll('.nav-item')[n].classList.add('active');
+  window.scrollTo(0,0);
+}
+</script>
+</body>
+</html>

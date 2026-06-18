@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>学习资源导航</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"Microsoft YaHei","Segoe UI",sans-serif;background:#f0f2f5;color:#333;line-height:1.7;padding:30px 40px}
+h1{font-size:26px;color:#1a1a2e;margin-bottom:8px}
+.subtitle{color:#666;margin-bottom:32px;font-size:15px}
+.section-title{font-size:18px;color:#1a1a2e;margin:32px 0 16px;padding-left:12px;border-left:4px solid #64ffda}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;margin-bottom:24px}
+.card{background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.06);transition:transform .2s,box-shadow .2s;cursor:pointer;text-decoration:none;color:inherit;display:block}
+.card:hover{transform:translateY(-3px);box-shadow:0 6px 20px rgba(0,0,0,.1)}
+.card-header{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.card-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.card-title{font-size:16px;font-weight:bold;color:#1a1a2e}
+.card-url{font-size:12px;color:#999;word-break:break-all}
+.card-desc{font-size:13px;color:#555;margin-top:6px}
+.card-tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;margin-top:8px;font-weight:bold}
+.tag-now{background:#dcfce7;color:#16a34a}
+.tag-soon{background:#fef3c7;color:#b45309}
+.tag-later{background:#e0e7ff;color:#4338ca}
+.tip-box{background:#f0fdfa;border:1px solid #99f6e4;border-radius:12px;padding:20px 24px;margin:20px 0}
+.tip-box h3{color:#0d9488;margin-bottom:8px}
+.tip-box p{font-size:14px;color:#444}
+.tip-box a{color:#0d9488;font-weight:bold}
+.divider{height:1px;background:#e5e7eb;margin:32px 0}
+.action-box{background:#1a1a2e;color:#fff;border-radius:12px;padding:24px;margin:32px 0;text-align:center}
+.action-box h3{color:#64ffda;margin-bottom:10px;font-size:18px}
+.action-box p{color:#ccd6f6;font-size:14px}
+.action-box a{color:#64ffda;font-weight:bold;font-size:16px;text-decoration:none;border-bottom:2px solid #64ffda}
+.action-box a:hover{opacity:.8}
+</style>
+</head>
+<body>
+
+<h1>嵌入式Linux学习资源导航</h1>
+<p class="subtitle">所有推荐网站汇总，点击卡片直接跳转，按阶段整理</p>
+
+<div class="action-box">
+<h3>🚀 现在立刻可以做的一件事</h3>
+<p>打开洛谷，注册账号，找到"入门"难度题单，今天做第一道。30分钟就够了。</p>
+<a href="https://www.luogu.com.cn" target="_blank">打开洛谷 →</a>
+</div>
+
+<div class="section-title">📌 现在就用（C语言 + 数据结构）</div>
+<div class="grid">
+
+<a class="card" href="https://www.luogu.com.cn" target="_blank">
+<div class="card-header">
+<div class="card-icon" style="background:#fef3c7">🏔️</div>
+<div>
+<div class="card-title">洛谷</div>
+<div class="card-url">luogu.com.cn</div>
+</div>
+</div>
+<div class="card-desc">算法刷题平台，有难度标签，从"入门"开始刷，用C语言提交，入门最友好</div>
+<span class="card-tag tag-now">现在就用</span>
+</a>
+
+<a class="card" href="https://leetcode.cn" target="_blank">
+<div class="card-header">
+<div class="card-icon" style="background:#fef9c3">💻</div>
+<div>
+<div class="card-title">力扣（LeetCode中国）</div>
+<div class="card-url">leetcode.cn</div>
+</div>
+</div>
+<div class="card-desc">业界标准刷题平台，面试必用，先做简单题，用C语言筛选，暑假开始主力用</div>
+<span class="card-tag tag-now">现在就用</span>
+</a>
+
+<a class="card" href="https://pintia.cn" target="_blank">
+<div class="card-header">
+<div class="card-icon" style="background:#e0f2fe">📝</div>
+<div>
+<div class="card-title">PTA（拼题A）</div>
+<div class="card-url">pintia.cn</div>
+</div>
+</div>
+<div class="card-desc">浙大出品，题型和大学课程贴近，适合复习C基础，应付期末考试也有帮助</div>
+<span class="card-tag tag-now">现在就用</span>
+</a>
+
+<a class="card" href="https://www.bilibili.com/video/BV1XZ4y1S7e1/" target="_blank">
+<div class="card-header">
+<div class="card-icon" style="background:#fce7f3">🎬</div>
+<div>
+<div class="card-title">B站·翁恺C语言</div>
+<div class="card-url">B站搜"翁恺 C语言"</div>
+</div>
+</div>
+<div class="card-desc">浙大教授，讲C语言透彻，适合补基础，指针和数组那几节必看</div>
+<span class="card-tag tag-now">现在就用</span>
+</a>
+
+<a class="card" href="https://www.runoob.com/cprogramming/c-tutorial.html" target="_blank">
+<div class="card-header">
+<div class="card-icon" style="background:#f3e8ff">📖</div>
+<div>
+<div class="card-title">菜鸟教程C语言</div>
+<div class="card-url">runoob.com/cprogramming</div>
+</div>
+</div>
+<div class="card-desc">快速查语法，忘了某个写法就翻这里，字典式查询，随时翻看</div>
+<span class="card-tag tag-now">现在就用</span>
+</a>
+
+</div>
+
+<div class="section-title">🔧 暑假开始用（Linux + 进阶C）</div>
+<div class="grid">
+
+<a class="card" href="https://www.runoob.com/linux/linux-tutorial.html" target="_blank">
+<div class="card-header">
+<div class="card-icon" style="background:#dcfce7">🐧</div>
+<div>
+<div class="card-title">菜鸟教程Linux</div>
+<div class="card-url">runoob.com/linux/linux-tutorial</div>
+</div>
+</div>
+<div class="card-desc">Linux基础命令快速入门，暑假开始学Linux时先过一遍这里</div>
+<span class="card-tag tag-soon">暑假开始</span>
+</a>
+
+<a class="card" href="https://wangdoc.com/bash/" target="_blank">
+<div class="card-header">
+<div class="card-icon" style="background:#e0e7ff">📚</div>
+<div>
+<div class="card-title">阮一峰Bash/Shell教程</div>
+<div class="card-url">wangdoc.com/bash</div>
+</div>
+</div>
+<div class="card-desc">阮一峰出品，Bash脚本编程完整教程，暑假学Makefile/Shell时配合使用，讲解清晰</div>
+<span class="card-tag tag-soon">暑假开始</span>
+</a>
+
+<a class="card" href="https://akaedu.github.io/book/" target="_blank">
+<div class="card-header">
+<div class="card-icon" style="background:#fef3c7">📘</div>
+<div>
+<div class="card-title">Linux C编程一站式学习</div>
+<div class="card-url">akaedu.github.io/book</div>
+</div>
+</div>
+<div class="card-desc">免费在线书，Linux下C语言编程完整教程，质量很高</div>
+<span class="card-tag tag-soon">暑假开始</span>
+</a>
+
+</div>
+
+<div class="section-title">⚡ 大二开始用（嵌入式 + 硬件）</div>
+<div class="grid">
+
+<a class="card" href="https://doc.embedfire.com" target="_blank">
+<div class="card-header">
+<div class="card-icon" style="background:#dcfce7">🔌</div>
+<div>
+<div class="card-title">野火嵌入式文档</div>
+<div class="card-url">doc.embedfire.com</div>
+</div>
+</div>
+<div class="card-desc">STM32 + 嵌入式Linux，免费文档最全，大二寒假学硬件时的主力资料</div>
+<span class="card-tag tag-later">大二开始</span>
+</a>
+
+<a class="card" href="https://www.bilibili.com" target="_blank">
+<div class="card-header">
+<div class="card-icon" style="background:#fce7f3">🎬</div>
+<div>
+<div class="card-title">B站·韦东山</div>
+<div class="card-url">B站搜"韦东山 嵌入式Linux"</div>
+</div>
+</div>
+<div class="card-desc">嵌入式Linux和FreeRTOS，公认讲得最好的老师，大二暑假和大三上必看</div>
+<span class="card-tag tag-later">大二开始</span>
+</a>
+
+<a class="card" href="https://www.bilibili.com" target="_blank">
+<div class="card-header">
+<div class="card-icon" style="background:#fce7f3">🎬</div>
+<div>
+<div class="card-title">B站·正点原子</div>
+<div class="card-url">B站搜"正点原子 STM32"</div>
+</div>
+</div>
+<div class="card-desc">STM32入门首选视频，大二寒假学单片机跟着这个做</div>
+<span class="card-tag tag-later">大二开始</span>
+</a>
+
+<a class="card" href="https://www.linuxcommand.org" target="_blank">
+<div class="card-header">
+<div class="card-icon" style="background:#e0f2fe">⌨️</div>
+<div>
+<div class="card-title">Linux命令大全</div>
+<div class="card-url">linuxcommand.org</div>
+</div>
+</div>
+<div class="card-desc">Linux命令速查手册，忘了某个命令怎么用就来查</div>
+<span class="card-tag tag-later">大二开始</span>
+</a>
+
+</div>
+
+<div class="section-title">🏆 大三冲刺用（面试 + 求职）</div>
+<div class="grid">
+
+<a class="card" href="https://www.nowcoder.com" target="_blank">
+<div class="card-header">
+<div class="card-icon" style="background:#fef3c7">🎯</div>
+<div>
+<div class="card-title">牛客网</div>
+<div class="card-url">nowcoder.com</div>
+</div>
+</div>
+<div class="card-desc">面经、嵌入式真题、笔试模拟，大三投递前必看，嵌入式面经板块有字节真题</div>
+<span class="card-tag tag-later">大三冲刺</span>
+</a>
+
+<a class="card" href="https://xiaolincoding.com" target="_blank">
+<div class="card-header">
+<div class="card-icon" style="background:#dcfce7">📊</div>
+<div>
+<div class="card-title">小林coding</div>
+<div class="card-url">xiaolincoding.com</div>
+</div>
+</div>
+<div class="card-desc">图解网络 + 图解操作系统，面试八股文讲得最清楚的免费资源，强烈推荐</div>
+<span class="card-tag tag-later">大三冲刺</span>
+</a>
+
+<a class="card" href="https://github.com" target="_blank">
+<div class="card-header">
+<div class="card-icon" style="background:#1a1a2e;color:#64ffda">🐙</div>
+<div>
+<div class="card-title">GitHub</div>
+<div class="card-url">github.com</div>
+</div>
+</div>
+<div class="card-desc">推代码攒commit记录，两年后这就是你的简历，暑假注册后坚持推送</div>
+<span class="card-tag tag-now">现在注册</span>
+</a>
+
+<a class="card" href="https://blog.csdn.net" target="_blank">
+<div class="card-header">
+<div class="card-icon" style="background:#fce7f3">🔍</div>
+<div>
+<div class="card-title">CSDN</div>
+<div class="card-url">csdn.net</div>
+</div>
+</div>
+<div class="card-desc">遇到bug搜解决方案，嵌入式相关中文资料多，调试时经常用到</div>
+<span class="card-tag tag-later">随时用</span>
+</a>
+
+<a class="card" href="https://stackoverflow.com" target="_blank">
+<div class="card-header">
+<div class="card-icon" style="background:#fef3c7">🌐</div>
+<div>
+<div class="card-title">Stack Overflow</div>
+<div class="card-url">stackoverflow.com</div>
+</div>
+</div>
+<div class="card-desc">英文问答社区，答案质量比CSDN更高，CSDN搜不到就来这里</div>
+<span class="card-tag tag-later">随时用</span>
+</a>
+
+</div>
+
+<div class="divider"></div>
+
+<div class="tip-box">
+<h3>💡 使用建议</h3>
+<p>
+<strong>现在（大一下）：</strong>洛谷每天1题（30分钟）+ 学校数据结构作业自己写<br>
+<strong>暑假：</strong>力扣开始 + 翁恺C语言进阶 + 菜鸟教程Linux<br>
+<strong>大二寒假：</strong>正点原子STM32视频 + 野火文档<br>
+<strong>大三冲刺：</strong>牛客面经 + 小林coding八股文<br><br>
+<em>不用一次全打开，按阶段来，学到哪用到哪。</em>
+</p>
+</div>
+
+</body>
+</html>

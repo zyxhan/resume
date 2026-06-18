@@ -8,3 +8,18 @@ desktop.ini
 .idea/
 *.swp
 *.swo
+
+# Word 工作流临时文件
+*_live.docx
+*.md.origfmt
+*_edited.docx
+*_edited.doc
+
+# Claude 自动生成
+.agents/
+.qoder/
+
+# 二进制文档（太大不适合版本管理）
+*.doc
+*.docx
+*.pptx

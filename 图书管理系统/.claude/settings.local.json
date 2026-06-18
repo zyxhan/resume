@@ -1,0 +1,44 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "agent",
+            "if": "Bash(git commit *)",
+            "prompt": "Review the most recent git commit in this project. Check:\n1. Are there any obvious bugs or issues in the changed files?\n2. Are there missing files, broken references, or inconsistencies?\n3. Does the change follow good practices for this project type?\n\nReport a brief summary: either \"✅ LGTM\" with one-line summary, or \"⚠️ Issues found\" with specific problems listed.\n\nUse Read and Bash(git diff HEAD~1) to inspect the changes.",
+            "timeout": 120,
+            "statusMessage": "🤖 Auto-reviewing commit changes...",
+            "async": true
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "agent",
+            "if": "Write(**/*.md)",
+            "prompt": "A markdown file was just written. Quickly check if it looks well-structured: proper headers, no broken links, clear formatting. Report only if there are issues. Keep it to 1-2 sentences.",
+            "timeout": 60,
+            "statusMessage": "📝 Checking markdown quality...",
+            "async": true
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "The user just typed: \"$ARGUMENTS\"\n\nDoes this message ask me to review, verify, or check code quality? \n- If YES: output {\"systemMessage\": \"💡 Tip: You can use /code-review to review changes, /verify to test them, or /simplify to clean up code.\"}\n- If NO: output {}",
+            "timeout": 15,
+            "statusMessage": "🧠 Detecting intent..."
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>嵌入式Linux学习仪表盘</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Microsoft YaHei","Segoe UI",sans-serif;background:linear-gradient(135deg,#f0fdf9 0%,#f0f9ff 40%,#fef3f2 100%);color:#1e293b;line-height:1.6;min-height:100vh;background-attachment:fixed}
+.header{background:rgba(255,255,255,0.7);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:20px 30px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(16,185,129,0.15);flex-wrap:wrap;gap:12px;position:sticky;top:0;z-index:100}
+.header h1{font-size:22px;background:linear-gradient(135deg,#0d9488,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.header .date{color:#64748b;font-size:14px}
+.stats-bar{display:flex;gap:12px;flex-wrap:wrap}
+.stat-box{text-align:center;background:rgba(255,255,255,0.6);backdrop-filter:blur(10px);border-radius:16px;padding:10px 16px;min-width:90px;border:1px solid rgba(16,185,129,0.12);box-shadow:0 2px 8px rgba(16,185,129,0.06)}
+.stat-box .num{font-size:26px;font-weight:bold;background:linear-gradient(135deg,#0d9488,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.stat-box .label{font-size:11px;color:#64748b}
+.nav{display:flex;gap:0;background:rgba(255,255,255,0.65);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid rgba(16,185,129,0.1);padding:0 30px;overflow-x:auto;position:sticky;top:80px;z-index:99}
+.nav-btn{padding:14px 24px;background:none;border:none;color:#64748b;cursor:pointer;font-size:14px;border-bottom:3px solid transparent;transition:.3s;white-space:nowrap;font-family:inherit}
+.nav-btn:hover{color:#0d9488}
+.nav-btn.active{color:#0d9488;border-bottom-color:#0d9488;font-weight:600}
+.container{padding:24px 30px;max-width:1200px;margin:0 auto}
+.page{display:none}.page.active{display:block}
+.panel{background:rgba(255,255,255,0.65);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:20px;padding:24px;border:1px solid rgba(16,185,129,0.12);margin-bottom:20px;box-shadow:0 4px 24px rgba(0,0,0,0.04)}
+.panel h2{font-size:17px;color:#0d9488;margin-bottom:16px;font-weight:600}
+.task-input{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.task-input input{flex:1;min-width:200px;background:rgba(255,255,255,0.8);border:1px solid #e2e8f0;color:#1e293b;padding:10px 14px;border-radius:12px;font-size:14px;font-family:inherit;transition:.3s}
+.task-input input:focus{outline:none;border-color:#0d9488;box-shadow:0 0 0 3px rgba(13,148,136,0.1)}
+.task-input select,.log-form select{background:rgba(255,255,255,0.8);border:1px solid #e2e8f0;color:#1e293b;padding:8px 12px;border-radius:12px;font-size:13px;font-family:inherit}
+.btn{padding:9px 20px;border-radius:12px;border:none;cursor:pointer;font-weight:600;font-size:14px;transition:.3s;font-family:inherit}
+.btn-primary{background:linear-gradient(135deg,#0d9488,#06b6d4);color:#fff;box-shadow:0 2px 8px rgba(13,148,136,0.25)}.btn-primary:hover{box-shadow:0 4px 16px rgba(13,148,136,0.35);transform:translateY(-1px)}
+.btn-warn{background:linear-gradient(135deg,#f59e0b,#f97316);color:#fff;box-shadow:0 2px 8px rgba(245,158,11,0.25)}.btn-warn:hover{box-shadow:0 4px 16px rgba(245,158,11,0.35);transform:translateY(-1px)}
+.btn-ghost{background:rgba(100,116,139,0.1);color:#64748b}.btn-ghost:hover{background:rgba(100,116,139,0.2)}
+.btn-danger{background:rgba(239,68,68,0.08);color:#ef4444;border:1px solid rgba(239,68,68,0.15)}.btn-danger:hover{background:rgba(239,68,68,0.15)}
+.task-list{list-style:none}
+.task-item{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;margin-bottom:8px;background:rgba(255,255,255,0.7);border:1px solid rgba(226,232,240,0.8);transition:.3s}
+.task-item:hover{background:rgba(255,255,255,0.9);box-shadow:0 2px 12px rgba(0,0,0,0.04)}
+.task-item.done{opacity:.4}.task-item.done .task-text{text-decoration:line-through}
+.task-check{width:22px;height:22px;border-radius:50%;border:2px solid #0d9488;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.3s;font-size:13px}
+.task-check.checked{background:linear-gradient(135deg,#0d9488,#06b6d4);border-color:transparent;color:#fff}
+.task-text{flex:1;font-size:14px;color:#334155}
+.task-tag{font-size:11px;padding:3px 10px;border-radius:20px;flex-shrink:0;font-weight:500}
+.tag-must{background:rgba(239,68,68,0.1);color:#dc2626}
+.tag-try{background:rgba(245,158,11,0.1);color:#d97706}
+.tag-bonus{background:rgba(13,148,136,0.1);color:#0d9488}
+.task-del{color:#cbd5e1;cursor:pointer;font-size:18px;padding:0 4px;line-height:1;transition:.2s}.task-del:hover{color:#ef4444}
+.task-link{text-decoration:none;font-size:14px;padding:2px 8px;border-radius:8px;background:rgba(13,148,136,0.08);transition:.2s;flex-shrink:0}
+.task-link:hover{background:rgba(13,148,136,0.18);transform:scale(1.1)}
+.task-date{font-size:11px;color:#94a3b8;flex-shrink:0}
+.preset-tasks{margin-bottom:16px}
+.preset-btn{padding:6px 14px;margin:4px;border-radius:20px;border:1px solid #e2e8f0;background:rgba(255,255,255,0.6);color:#64748b;cursor:pointer;font-size:12px;font-family:inherit;transition:.3s}
+.preset-btn:hover{border-color:#0d9488;color:#0d9488;background:rgba(13,148,136,0.06)}
+.timer-display{text-align:center;padding:10px 0}
+.timer-circle{width:220px;height:220px;border-radius:50%;border:3px solid #e2e8f0;margin:0 auto 20px;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:.4s;background:rgba(255,255,255,0.5)}
+.timer-circle.running{border-color:#0d9488;box-shadow:0 0 40px rgba(13,148,136,0.12),inset 0 0 30px rgba(13,148,136,0.04)}
+.timer-circle.onbreak{border-color:#f59e0b;box-shadow:0 0 40px rgba(245,158,11,0.12),inset 0 0 30px rgba(245,158,11,0.04)}
+.timer-time{font-size:52px;font-weight:bold;color:#0f172a;font-variant-numeric:tabular-nums}
+.timer-label{font-size:13px;color:#64748b;margin-top:2px}
+.timer-btns{display:flex;gap:10px;justify-content:center;margin:16px 0}
+.timer-modes{display:flex;gap:8px;justify-content:center;margin-bottom:12px}
+.mode-btn{padding:7px 18px;border-radius:20px;border:1px solid #e2e8f0;background:rgba(255,255,255,0.5);color:#64748b;cursor:pointer;font-size:13px;font-family:inherit;transition:.3s}
+.mode-btn.active{border-color:#0d9488;color:#0d9488;background:rgba(13,148,136,0.08)}
+.timer-history{text-align:center;margin-top:16px;color:#64748b;font-size:13px}
+.timer-history span{color:#0d9488;font-weight:600}
+.log-form{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.log-form input{background:rgba(255,255,255,0.8);border:1px solid #e2e8f0;color:#1e293b;padding:8px 12px;border-radius:12px;font-size:13px;font-family:inherit}
+.log-form input:focus{outline:none;border-color:#0d9488;box-shadow:0 0 0 3px rgba(13,148,136,0.1)}
+.log-form input.w-site{width:100px}.log-form input.w-topic{width:140px}
+.log-table{width:100%;border-collapse:collapse;font-size:13px}
+.log-table th{text-align:left;padding:10px 12px;color:#64748b;border-bottom:1px solid #e2e8f0;font-weight:500}
+.log-table td{padding:10px 12px;border-bottom:1px solid #f1f5f9;color:#334155}
+.log-table tr:hover td{background:rgba(13,148,136,0.03)}
+.log-diff{padding:3px 12px;border-radius:20px;font-size:11px;font-weight:500}
+.diff-easy{background:rgba(13,148,136,0.1);color:#0d9488}
+.diff-med{background:rgba(245,158,11,0.1);color:#d97706}
+.diff-hard{background:rgba(239,68,68,0.1);color:#dc2626}
+.log-scroll{max-height:400px;overflow-y:auto}
+.log-form-card{background:rgba(255,255,255,0.7);backdrop-filter:blur(20px);border-radius:16px;padding:20px;border:1px solid rgba(16,185,129,0.12);margin-bottom:16px}
+.log-form-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.log-form-row label{width:60px;font-size:13px;color:#64748b;flex-shrink:0;font-weight:500}
+.log-form-row-col{flex-direction:column;align-items:flex-start}
+.log-form-row-col label{width:auto;margin-bottom:4px}
+.log-btn-group{display:flex;gap:6px;flex-wrap:wrap}
+.log-opt{padding:6px 14px;border-radius:20px;border:1px solid #e2e8f0;background:rgba(255,255,255,0.6);color:#64748b;cursor:pointer;font-size:13px;font-family:inherit;transition:.3s}
+.log-opt:hover{background:rgba(13,148,136,0.06);border-color:#a7f3d0}
+.log-opt.active{background:linear-gradient(135deg,#0d9488,#06b6d4);color:#fff;border-color:transparent;box-shadow:0 2px 8px rgba(13,148,136,0.25)}
+.log-item{background:rgba(255,255,255,0.7);border-radius:12px;padding:12px 14px;margin-bottom:8px;border:1px solid rgba(226,232,240,0.8);cursor:pointer;transition:.3s}
+.log-item:hover{background:rgba(255,255,255,0.9);box-shadow:0 2px 8px rgba(0,0,0,0.04)}
+.log-item-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.log-item-date{font-size:12px;color:#94a3b8}
+.log-item-site{font-size:12px;color:#64748b;background:rgba(100,116,139,0.08);padding:2px 8px;border-radius:8px}
+.log-item-pid{font-size:14px;color:#1e293b}
+.log-item-topic{font-size:12px;color:#0d9488;background:rgba(13,148,136,0.08);padding:2px 8px;border-radius:8px}
+.log-item-note{font-size:12px;color:#64748b;margin-top:6px;padding-left:4px}
+.stage-item{padding:16px;background:rgba(255,255,255,0.7);border-radius:16px;margin-bottom:14px;border:1px solid rgba(226,232,240,0.8);transition:.3s}
+.stage-item:hover{box-shadow:0 2px 12px rgba(0,0,0,0.04)}
+.stage-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.stage-name{font-size:15px;font-weight:600;color:#1e293b}
+.stage-pct{font-size:14px;color:#0d9488;font-weight:700}
+.progress-bar{height:8px;background:#f1f5f9;border-radius:10px;overflow:hidden;margin:8px 0}
+.progress-fill{height:100%;border-radius:10px;transition:width .5s ease}
+.pf-1{background:linear-gradient(90deg,#0d9488,#06b6d4)}
+.pf-2{background:linear-gradient(90deg,#0891b2,#38bdf8)}
+.pf-3{background:linear-gradient(90deg,#d97706,#fbbf24)}
+.pf-4{background:linear-gradient(90deg,#ea580c,#fb923c)}
+.pf-5{background:linear-gradient(90deg,#7c3aed,#a78bfa)}
+.pf-6{background:linear-gradient(90deg,#db2777,#f472b6)}
+.pf-7{background:linear-gradient(90deg,#dc2626,#f87171)}
+.stage-time{font-size:12px;color:#94a3b8;margin-bottom:8px}
+.subtask{display:flex;align-items:center;gap:8px;font-size:13px;padding:5px 0;cursor:pointer;color:#334155}
+.mini-check{width:16px;height:16px;border-radius:5px;border:1.5px solid #cbd5e1;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;transition:.3s}
+.mini-check.done{background:linear-gradient(135deg,#0d9488,#06b6d4);border-color:transparent;color:#fff}
+.subtask.done .subtask-text{text-decoration:line-through;color:#94a3b8}
+.quote-box{text-align:center;padding:24px;color:#64748b;font-size:14px;font-style:italic;margin-top:20px}
+.quote-box span{color:#0d9488;font-weight:600}
+.empty{text-align:center;color:#94a3b8;padding:30px;font-size:14px}
+.day-card{background:rgba(255,255,255,0.7);border-radius:16px;padding:16px;margin-bottom:12px;border:1px solid rgba(226,232,240,0.8);transition:.3s}
+.day-card:hover{box-shadow:0 2px 12px rgba(0,0,0,0.04)}
+.day-card h3{font-size:14px;color:#0d9488;margin-bottom:10px;display:flex;align-items:center;gap:8px;font-weight:600}
+.day-card h3 .day-label{background:rgba(13,148,136,0.1);color:#0d9488;padding:3px 12px;border-radius:20px;font-size:11px;font-weight:500}
+.day-task{display:flex;align-items:flex-start;gap:8px;font-size:13px;padding:4px 0;color:#334155}
+.day-task .dt-icon{color:#0d9488;flex-shrink:0;font-size:11px;margin-top:4px}
+.day-task .dt-note{color:#94a3b8;font-size:12px;margin-left:4px}
+.week-desc{color:#475569;font-size:13px;margin-bottom:16px;padding:14px 16px;background:rgba(13,148,136,0.05);border-radius:14px;border-left:4px solid #0d9488}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#94a3b8}
+@media(max-width:1000px){.container{padding:16px}.res-grid{grid-template-columns:1fr}}
+.res-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-bottom:16px}
+.res-card{background:rgba(255,255,255,0.7);border-radius:16px;padding:16px;border:1px solid rgba(226,232,240,0.8);text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:10px;transition:.3s;cursor:pointer}
+.res-card:hover{background:rgba(255,255,255,0.9);box-shadow:0 4px 16px rgba(0,0,0,0.06);transform:translateY(-2px)}
+.res-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.res-body{flex:1}
+.res-title{font-size:14px;font-weight:600;color:#1e293b}
+.res-url{font-size:11px;color:#94a3b8}
+.res-desc{font-size:12px;color:#64748b;margin-top:4px}
+.res-tag{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:500;align-self:flex-start}
+.tag-r-now{background:rgba(13,148,136,0.1);color:#0d9488}
+.tag-r-soon{background:rgba(245,158,11,0.1);color:#d97706}
+.tag-r-later{background:rgba(139,92,246,0.1);color:#7c3aed}
+.tag-r-end{background:rgba(239,68,68,0.1);color:#dc2626}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>🔧 嵌入式Linux学习仪表盘</h1>
+    <div class="date" id="today-date"></div>
+  </div>
+  <div class="stats-bar">
+    <div class="stat-box"><div class="num" id="s-streak">0</div><div class="label">连续打卡/天</div></div>
+    <div class="stat-box"><div class="num" id="s-tasks">0</div><div class="label">已完成任务</div></div>
+    <div class="stat-box"><div class="num" id="s-probs">0</div><div class="label">累计刷题</div></div>
+    <div class="stat-box"><div class="num" id="s-pomos">0</div><div class="label">番茄钟</div></div>
+  </div>
+</div>
+
+<div class="nav">
+  <button class="nav-btn active" onclick="showPage('plan')">📅 每周计划</button>
+  <button class="nav-btn" onclick="showPage('tasks')">📋 今日任务</button>
+  <button class="nav-btn" onclick="showPage('timer')">🍅 番茄钟</button>
+  <button class="nav-btn" onclick="showPage('log')">📝 刷题记录</button>
+  <button class="nav-btn" onclick="showPage('progress')">📊 阶段进度</button>
+  <button class="nav-btn" onclick="showPage('resources')">📚 学习资源</button>
+</div>
+
+<div class="container">
+
+<!-- ============ 每周计划 ============ -->
+<div class="page active" id="page-plan">
+  <div class="panel">
+    <h2>📅 选择当前周次</h2>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px">
+      <select id="week-select" onchange="renderWeekPlan()" style="background:#0f0f1a;border:1px solid #2a2a4a;color:#e0e0e0;padding:10px 14px;border-radius:8px;font-size:14px;font-family:inherit;min-width:280px"></select>
+      <button class="btn btn-primary" onclick="loadWeekTasks()">加载本周任务到今日</button>
+    </div>
+    <div id="week-detail"></div>
+  </div>
+</div>
+
+<!-- ============ 每日任务 ============ -->
+<div class="page" id="page-tasks">
+  <div class="panel">
+    <h2>📋 今日任务</h2>
+    <div class="preset-tasks">
+      <span style="font-size:12px;color:#8892b0;margin-right:6px">快捷添加：</span>
+      <button class="preset-btn" onclick="addPreset('洛谷刷题1道','must')">洛谷刷题1道</button>
+      <button class="preset-btn" onclick="addPreset('LeetCode刷题1道','must')">LeetCode 1道</button>
+      <button class="preset-btn" onclick="addPreset('看视频教程30分钟','try')">看视频30分钟</button>
+      <button class="preset-btn" onclick="addPreset('阅读技术书籍30分钟','try')">看书30分钟</button>
+      <button class="preset-btn" onclick="addPreset('写代码练习1小时','must')">写代码1小时</button>
+      <button class="preset-btn" onclick="addPreset('复习错题本','bonus')">复习错题本</button>
+      <button class="preset-btn" onclick="addPreset('整理学习笔记','bonus')">整理笔记</button>
+    </div>
+    <div class="task-input">
+      <input type="text" id="task-text" placeholder="输入自定义任务..." onkeydown="if(event.key==='Enter')addTask()">
+      <select id="task-pri">
+        <option value="must">必做</option>
+        <option value="try">尽量做</option>
+        <option value="bonus">有更好</option>
+      </select>
+      <button class="btn btn-primary" onclick="addTask()">添加</button>
+    </div>
+    <ul class="task-list" id="task-list"></ul>
+    <div class="empty" id="task-empty" style="display:none">今天还没有任务，点击上方按钮或输入添加 ✨</div>
+  </div>
+</div>
+
+<!-- ============ 番茄钟 ============ -->
+<div class="page" id="page-timer">
+  <div class="panel">
+    <h2>🍅 番茄钟</h2>
+    <div class="timer-modes">
+      <button class="mode-btn active" onclick="setMode(25,this)">专注 25分钟</button>
+      <button class="mode-btn" onclick="setMode(45,this)">专注 45分钟</button>
+      <button class="mode-btn" onclick="setMode(5,this)">休息 5分钟</button>
+      <button class="mode-btn" onclick="setMode(15,this)">长休息 15分钟</button>
+    </div>
+    <div class="timer-display">
+      <div class="timer-circle" id="timer-circle">
+        <div class="timer-time" id="timer-time">25:00</div>
+        <div class="timer-label" id="timer-label">准备开始</div>
+      </div>
+      <div class="timer-btns">
+        <button class="btn btn-primary" id="btn-start" onclick="startTimer()">开始</button>
+        <button class="btn btn-warn" id="btn-pause" onclick="pauseTimer()" style="display:none">暂停</button>
+        <button class="btn btn-ghost" onclick="resetTimer()">重置</button>
+      </div>
+      <div class="timer-history">
+        今日完成 <span id="today-pomos">0</span> 个番茄钟 ｜ 累计 <span id="total-pomos">0</span> 个
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 刷题记录 ============ -->
+<div class="page" id="page-log">
+  <div class="panel">
+    <h2>📝 刷题记录</h2>
+    <div class="log-form-card">
+      <div class="log-form-row">
+        <label>平台</label>
+        <div class="log-btn-group" id="log-site-group">
+          <button class="log-opt active" data-val="洛谷" onclick="selLog('site',this)">洛谷</button>
+          <button class="log-opt" data-val="力扣" onclick="selLog('site',this)">力扣</button>
+          <button class="log-opt" data-val="PTA" onclick="selLog('site',this)">PTA</button>
+          <button class="log-opt" data-val="自定义" onclick="selLog('site',this)">自定义</button>
+        </div>
+      </div>
+      <div class="log-form-row">
+        <label>题号</label>
+        <input type="text" id="log-pid" placeholder="例：P1001 或 206" style="width:160px;background:rgba(255,255,255,0.8);border:1px solid #e2e8f0;color:#1e293b;padding:8px 12px;border-radius:10px;font-size:14px;font-family:inherit">
+        <input type="text" id="log-site-custom" placeholder="平台名称" style="display:none;width:120px;background:rgba(255,255,255,0.8);border:1px solid #e2e8f0;color:#1e293b;padding:8px 12px;border-radius:10px;font-size:14px;font-family:inherit;margin-left:8px">
+      </div>
+      <div class="log-form-row">
+        <label>知识点</label>
+        <div class="log-btn-group" id="log-topic-group">
+          <button class="log-opt" data-val="链表" onclick="selLog('topic',this)">链表</button>
+          <button class="log-opt" data-val="栈" onclick="selLog('topic',this)">栈</button>
+          <button class="log-opt" data-val="队列" onclick="selLog('topic',this)">队列</button>
+          <button class="log-opt" data-val="树" onclick="selLog('topic',this)">树</button>
+          <button class="log-opt" data-val="排序" onclick="selLog('topic',this)">排序</button>
+          <button class="log-opt" data-val="指针" onclick="selLog('topic',this)">指针</button>
+          <button class="log-opt" data-val="递归" onclick="selLog('topic',this)">递归</button>
+          <button class="log-opt" data-val="数组" onclick="selLog('topic',this)">数组</button>
+          <button class="log-opt" data-val="字符串" onclick="selLog('topic',this)">字符串</button>
+          <button class="log-opt" data-val="DP" onclick="selLog('topic',this)">DP</button>
+          <button class="log-opt" data-val="贪心" onclick="selLog('topic',this)">贪心</button>
+          <button class="log-opt" data-val="二分" onclick="selLog('topic',this)">二分</button>
+        </div>
+      </div>
+      <div class="log-form-row">
+        <label>难度</label>
+        <div class="log-btn-group" id="log-diff-group">
+          <button class="log-opt active" data-val="easy" onclick="selLog('diff',this)">简单</button>
+          <button class="log-opt" data-val="med" onclick="selLog('diff',this)">中等</button>
+          <button class="log-opt" data-val="hard" onclick="selLog('diff',this)">困难</button>
+        </div>
+      </div>
+      <div class="log-form-row log-form-row-col">
+        <label>心得体会</label>
+        <textarea id="log-note" rows="3" placeholder="这道题学到了什么、卡在哪里、下次注意什么..." style="width:100%;background:rgba(255,255,255,0.8);border:1px solid #e2e8f0;color:#1e293b;padding:12px;border-radius:12px;font-size:14px;font-family:inherit;resize:vertical"></textarea>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:4px">
+        <button class="btn btn-ghost" onclick="resetLogForm()">清空</button>
+        <button class="btn btn-primary" onclick="submitLog()">保存记录</button>
+      </div>
+    </div>
+    <div class="log-scroll">
+      <div id="log-list"></div>
+      <div class="empty" id="log-empty" style="display:none">还没有刷题记录，开始记录吧 📝</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 阶段进度 ============ -->
+<div class="page" id="page-progress">
+  <div class="panel">
+    <h2>📊 学习阶段进度</h2>
+    <div id="stage-list"></div>
+  </div>
+</div>
+
+<!-- ============ 学习资源 ============ -->
+<div class="page" id="page-resources">
+  <div class="panel">
+    <h2>📚 学习资源导航</h2>
+    <div style="background:rgba(13,148,136,0.06);border-radius:14px;padding:16px 20px;margin-bottom:20px;border-left:4px solid #0d9488">
+      <strong style="color:#0d9488">🚀 现在立刻可以做的一件事：</strong>
+      <span style="color:#475569">打开洛谷，做今天的题目。30分钟就够了。</span>
+      <a href="https://www.luogu.com.cn" target="_blank" style="color:#0d9488;font-weight:600;margin-left:8px;text-decoration:none">打开洛谷 →</a>
+    </div>
+    <div style="font-size:15px;font-weight:600;color:#1e293b;margin:20px 0 12px;padding-left:12px;border-left:3px solid #0d9488">📌 现在就用（C语言 + 数据结构）</div>
+    <div class="res-grid">
+      <a class="res-card" href="https://www.luogu.com.cn" target="_blank">
+        <div class="res-icon" style="background:#fef3c7">🏔️</div>
+        <div class="res-body"><div class="res-title">洛谷</div><div class="res-url">luogu.com.cn</div><div class="res-desc">算法刷题平台，从“入门”开始刷，C语言提交，入门最友好</div></div>
+        <span class="res-tag tag-r-now">现在就用</span>
+      </a>
+      <a class="res-card" href="https://leetcode.cn" target="_blank">
+        <div class="res-icon" style="background:#fef9c3">💻</div>
+        <div class="res-body"><div class="res-title">力扣（LeetCode）</div><div class="res-url">leetcode.cn</div><div class="res-desc">业界标准刷题，面试必用，用C语言筛选，暑假主力用</div></div>
+        <span class="res-tag tag-r-now">现在就用</span>
+      </a>
+      <a class="res-card" href="https://pintia.cn" target="_blank">
+        <div class="res-icon" style="background:#e0f2fe">📝</div>
+        <div class="res-body"><div class="res-title">PTA（拼题A）</div><div class="res-url">pintia.cn</div><div class="res-desc">浙大出品，题型和课程贴近，复习C基础和期末考试有用</div></div>
+        <span class="res-tag tag-r-now">现在就用</span>
+      </a>
+      <a class="res-card" href="https://www.bilibili.com/video/BV1XZ4y1S7e1/" target="_blank">
+        <div class="res-icon" style="background:#fce7f3">🎬</div>
+        <div class="res-body"><div class="res-title">B站·翁恺C语言</div><div class="res-url">B站视频</div><div class="res-desc">浙大教授，讲C语言透彻，指针和数组那几节必看</div></div>
+        <span class="res-tag tag-r-now">现在就用</span>
+      </a>
+      <a class="res-card" href="https://www.runoob.com/cprogramming/c-tutorial.html" target="_blank">
+        <div class="res-icon" style="background:#f3e8ff">📖</div>
+        <div class="res-body"><div class="res-title">菜鸟教程C语言</div><div class="res-url">runoob.com</div><div class="res-desc">快速查语法，字典式查询，忘了写法就翻这里</div></div>
+        <span class="res-tag tag-r-now">现在就用</span>
+      </a>
+    </div>
+    <div style="font-size:15px;font-weight:600;color:#1e293b;margin:24px 0 12px;padding-left:12px;border-left:3px solid #f59e0b">🔧 暑假开始用（Linux + 进阶C）</div>
+    <div class="res-grid">
+      <a class="res-card" href="https://www.runoob.com/linux/linux-tutorial.html" target="_blank">
+        <div class="res-icon" style="background:#dcfce7">🐧</div>
+        <div class="res-body"><div class="res-title">菜鸟教程Linux</div><div class="res-url">runoob.com/linux</div><div class="res-desc">Linux基础命令快速入门，暑假先过一遍</div></div>
+        <span class="res-tag tag-r-soon">暑假开始</span>
+      </a>
+      <a class="res-card" href="https://wangdoc.com/bash/" target="_blank">
+        <div class="res-icon" style="background:#e0e7ff">📚</div>
+        <div class="res-body"><div class="res-title">阮一峰Bash/Shell教程</div><div class="res-url">wangdoc.com/bash</div><div class="res-desc">Bash脚本完整教程，学Makefile/Shell时配合使用</div></div>
+        <span class="res-tag tag-r-soon">暑假开始</span>
+      </a>
+      <a class="res-card" href="https://akaedu.github.io/book/" target="_blank">
+        <div class="res-icon" style="background:#fef3c7">📘</div>
+        <div class="res-body"><div class="res-title">Linux C编程一站式学习</div><div class="res-url">akaedu.github.io</div><div class="res-desc">免费在线书，Linux下C编程完整教程，质量高</div></div>
+        <span class="res-tag tag-r-soon">暑假开始</span>
+      </a>
+    </div>
+    <div style="font-size:15px;font-weight:600;color:#1e293b;margin:24px 0 12px;padding-left:12px;border-left:3px solid #8b5cf6">⚡ 大二开始用（嵌入式 + 硬件）</div>
+    <div class="res-grid">
+      <a class="res-card" href="https://doc.embedfire.com" target="_blank">
+        <div class="res-icon" style="background:#dcfce7">🔌</div>
+        <div class="res-body"><div class="res-title">野火嵌入式文档</div><div class="res-url">doc.embedfire.com</div><div class="res-desc">STM32 + 嵌入式Linux，免费文档最全</div></div>
+        <span class="res-tag tag-r-later">大二开始</span>
+      </a>
+      <a class="res-card" href="https://www.bilibili.com" target="_blank">
+        <div class="res-icon" style="background:#fce7f3">🎬</div>
+        <div class="res-body"><div class="res-title">B站·韦东山</div><div class="res-url">B站搜“韦东山”</div><div class="res-desc">嵌入式Linux和FreeRTOS，公认讲得最好的老师</div></div>
+        <span class="res-tag tag-r-later">大二开始</span>
+      </a>
+      <a class="res-card" href="https://www.bilibili.com" target="_blank">
+        <div class="res-icon" style="background:#fce7f3">🎬</div>
+        <div class="res-body"><div class="res-title">B站·正点原子</div><div class="res-url">B站搜“正点原子 STM32”</div><div class="res-desc">STM32入门首选，寒假学单片机跟着做</div></div>
+        <span class="res-tag tag-r-later">大二开始</span>
+      </a>
+      <a class="res-card" href="https://www.linuxcommand.org" target="_blank">
+        <div class="res-icon" style="background:#e0f2fe">⌨️</div>
+        <div class="res-body"><div class="res-title">Linux命令大全</div><div class="res-url">linuxcommand.org</div><div class="res-desc">Linux命令速查手册，忘了就来查</div></div>
+        <span class="res-tag tag-r-later">大二开始</span>
+      </a>
+    </div>
+    <div style="font-size:15px;font-weight:600;color:#1e293b;margin:24px 0 12px;padding-left:12px;border-left:3px solid #dc2626">🏆 大三冲刺用（面试 + 求职）</div>
+    <div class="res-grid">
+      <a class="res-card" href="https://www.nowcoder.com" target="_blank">
+        <div class="res-icon" style="background:#fef3c7">🎯</div>
+        <div class="res-body"><div class="res-title">牛客网</div><div class="res-url">nowcoder.com</div><div class="res-desc">面经、嵌入式真题、笔试模拟，投递前必看</div></div>
+        <span class="res-tag tag-r-end">大三冲刺</span>
+      </a>
+      <a class="res-card" href="https://xiaolincoding.com" target="_blank">
+        <div class="res-icon" style="background:#dcfce7">📊</div>
+        <div class="res-body"><div class="res-title">小林coding</div><div class="res-url">xiaolincoding.com</div><div class="res-desc">图解网络+操作系统，面试八股文讲得最清楚</div></div>
+        <span class="res-tag tag-r-end">大三冲刺</span>
+      </a>
+      <a class="res-card" href="https://github.com" target="_blank">
+        <div class="res-icon" style="background:#0f172a">🐙</div>
+        <div class="res-body"><div class="res-title">GitHub</div><div class="res-url">github.com</div><div class="res-desc">推代码攒commit，两年后这就是你的简历</div></div>
+        <span class="res-tag tag-r-now">现在注册</span>
+      </a>
+      <a class="res-card" href="https://blog.csdn.net" target="_blank">
+        <div class="res-icon" style="background:#fce7f3">🔍</div>
+        <div class="res-body"><div class="res-title">CSDN</div><div class="res-url">csdn.net</div><div class="res-desc">搜bug解决方案，嵌入式中文资料多</div></div>
+        <span class="res-tag tag-r-end">随时用</span>
+      </a>
+      <a class="res-card" href="https://stackoverflow.com" target="_blank">
+        <div class="res-icon" style="background:#fef3c7">🌐</div>
+        <div class="res-body"><div class="res-title">Stack Overflow</div><div class="res-url">stackoverflow.com</div><div class="res-desc">英文问答社区，答案质量高</div></div>
+        <span class="res-tag tag-r-end">随时用</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="quote-box">每天进步一点点，<span>坚持</span>比速度更重要 💪</div>
+</div>
+
+<script>
+// ============ 存储 ============
+const LS = {
+  get(k, d) { try { return JSON.parse(localStorage.getItem('elu_'+k)) ?? d } catch { return d } },
+  set(k, v) { localStorage.setItem('elu_'+k, JSON.stringify(v)) }
+};
+
+// ============ 日期 ============
+function today() { return new Date().toISOString().slice(0,10) }
+function fmtDate(d) { return d ? d.slice(5).replace('-','/') : '' }
+document.getElementById('today-date').textContent = new Date().toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
+
+// ============ 导航 ============
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ============ 每日任务 ============
+function getTasks() { return LS.get('tasks_'+today(), []) }
+function saveTasks(t) { LS.set('tasks_'+today(), t); renderTasks(); updateStats(); }
+
+function addTask() {
+  const input = document.getElementById('task-text');
+  const text = input.value.trim();
+  if (!text) return;
+  const pri = document.getElementById('task-pri').value;
+  const tasks = getTasks();
+  tasks.push({ id: Date.now(), text, pri, done: false });
+  input.value = '';
+  saveTasks(tasks);
+}
+
+function addPreset(text, pri) {
+  const tasks = getTasks();
+  if (tasks.some(t => t.text === text && !t.done)) return; // 避免重复
+  tasks.push({ id: Date.now(), text, pri, done: false });
+  saveTasks(tasks);
+}
+
+function toggleTask(id) {
+  const tasks = getTasks();
+  const t = tasks.find(t => t.id === id);
+  if (t) { t.done = !t.done; saveTasks(tasks); }
+}
+
+function delTask(id) {
+  const tasks = getTasks().filter(t => t.id !== id);
+  saveTasks(tasks);
+}
+
+function getTaskLink(text) {
+  // 洛谷：提取P数字编号
+  const lgMatch = text.match(/P(\d+)/);
+  if (lgMatch && text.includes('洛谷')) return `https://www.luogu.com.cn/problem/P${lgMatch[1]}`;
+  // 力扣：提取题目名称去搜索
+  const lcMatch = text.match(/力扣第\d+题\s*(.+?)(?:[（(]|$)/);
+  if (lcMatch) return `https://leetcode.cn/search/?q=${encodeURIComponent(lcMatch[1])}`;
+  // 洛谷单独P编号
+  if (text.match(/^洛谷P\d+/)) return `https://www.luogu.com.cn/problem/${text.match(/P\d+/)[0]}`;
+  return null;
+}
+
+function renderTasks() {
+  const tasks = getTasks();
+  const list = document.getElementById('task-list');
+  const empty = document.getElementById('task-empty');
+  if (!tasks.length) { list.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  const tagMap = { must:['必做','tag-must'], try:['尽量做','tag-try'], bonus:['有更好','tag-bonus'] };
+  list.innerHTML = tasks.map(t => {
+    const link = getTaskLink(t.text);
+    const linkBtn = link ? `<a class="task-link" href="${link}" target="_blank" onclick="event.stopPropagation()" title="跳转做题">🔗</a>` : '';
+    return `<li class="task-item ${t.done?'done':''}">
+      <div class="task-check ${t.done?'checked':''}" onclick="toggleTask(${t.id})">${t.done?'✓':''}</div>
+      <span class="task-text">${esc(t.text)}</span>
+      ${linkBtn}
+      <span class="task-tag ${tagMap[t.pri][1]}">${tagMap[t.pri][0]}</span>
+      <span class="task-del" onclick="delTask(${t.id})">×</span>
+    </li>`;
+  }).join('');
+}
+
+// ============ 番茄钟 ============
+let timerInterval = null, timerSeconds = 25*60, timerTotal = 25*60, timerRunning = false;
+
+function setMode(min, btn) {
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  timerSeconds = min * 60; timerTotal = min * 60;
+  timerRunning = false;
+  clearInterval(timerInterval);
+  updateTimerDisplay();
+  document.getElementById('btn-start').style.display = '';
+  document.getElementById('btn-pause').style.display = 'none';
+  document.getElementById('timer-circle').className = 'timer-circle';
+  document.getElementById('timer-label').textContent = '准备开始';
+}
+
+function startTimer() {
+  if (timerRunning) return;
+  timerRunning = true;
+  const circle = document.getElementById('timer-circle');
+  circle.className = 'timer-circle ' + (timerTotal <= 15*60 ? 'onbreak' : 'running');
+  document.getElementById('timer-label').textContent = timerTotal <= 15*60 ? '休息中...' : '专注中...';
+  document.getElementById('btn-start').style.display = 'none';
+  document.getElementById('btn-pause').style.display = '';
+  timerInterval = setInterval(() => {
+    timerSeconds--;
+    updateTimerDisplay();
+    if (timerSeconds <= 0) {
+      clearInterval(timerInterval); timerRunning = false;
+      if (timerTotal > 15*60) {
+        const d = today();
+        let pomos = LS.get('pomos_'+d, 0); pomos++;
+        LS.set('pomos_'+d, pomos);
+        let total = LS.get('pomos_total', 0); total++;
+        LS.set('pomos_total', total);
+        updateStats();
+        renderPomoStats();
+      }
+      document.getElementById('timer-label').textContent = '🎉 完成！';
+      document.getElementById('btn-start').style.display = '';
+      document.getElementById('btn-pause').style.display = 'none';
+      document.getElementById('timer-circle').className = 'timer-circle';
+      try { new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbsGczI0Cax9vBeUkYK2+m19u8d0AXHlqgztw5OjJSmr/aw3k1GyJdp9DcOj8eL3Kp0t05QSFBmcjaunY4IS10qtLeOj0hMHOq0985QCE2da0="); } catch(e){}
+    }
+  }, 1000);
+}
+
+function pauseTimer() {
+  clearInterval(timerInterval); timerRunning = false;
+  document.getElementById('btn-start').style.display = '';
+  document.getElementById('btn-pause').style.display = 'none';
+  document.getElementById('timer-label').textContent = '已暂停';
+}
+
+function resetTimer() {
+  clearInterval(timerInterval); timerRunning = false;
+  timerSeconds = timerTotal;
+  updateTimerDisplay();
+  document.getElementById('btn-start').style.display = '';
+  document.getElementById('btn-pause').style.display = 'none';
+  document.getElementById('timer-circle').className = 'timer-circle';
+  document.getElementById('timer-label').textContent = '准备开始';
+}
+
+function updateTimerDisplay() {
+  const m = Math.floor(timerSeconds/60), s = timerSeconds%60;
+  document.getElementById('timer-time').textContent = String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+
+function renderPomoStats() {
+  document.getElementById('today-pomos').textContent = LS.get('pomos_'+today(), 0);
+  document.getElementById('total-pomos').textContent = LS.get('pomos_total', 0);
+}
+
+// ============ 刷题记录 ============
+function getLogs() { return LS.get('logs', []) }
+
+const logState = { site:'洛谷', diff:'easy', topic:'' };
+
+function selLog(type, btn) {
+  const group = btn.parentElement;
+  group.querySelectorAll('.log-opt').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const val = btn.dataset.val;
+  if (type === 'site') {
+    logState.site = val;
+    document.getElementById('log-site-custom').style.display = val === '自定义' ? 'inline-block' : 'none';
+  } else if (type === 'diff') {
+    logState.diff = val;
+  } else if (type === 'topic') {
+    // topic支持多选，点击切换
+    if (btn.classList.contains('active')) {
+      // 刚刚被add active，累加
+    } else {
+      // 取消选中
+    }
+    logState.topic = Array.from(group.querySelectorAll('.log-opt.active')).map(b => b.dataset.val).join(',');
+  }
+}
+
+function submitLog(editId) {
+  const pid = document.getElementById('log-pid').value.trim();
+  if (!pid) { document.getElementById('log-pid').focus(); return; }
+  const site = logState.site === '自定义' ? (document.getElementById('log-site-custom').value.trim() || '其他') : logState.site;
+  const topic = logState.topic;
+  const note = document.getElementById('log-note').value.trim();
+  const logs = getLogs();
+  if (editId) {
+    const log = logs.find(l => l.id === editId);
+    if (log) Object.assign(log, { site, pid, topic, diff: logState.diff, note });
+  } else {
+    logs.unshift({ date: today(), site, pid, topic, diff: logState.diff, note, id: Date.now() });
+  }
+  LS.set('logs', logs);
+  resetLogForm();
+  // 恢复保存按钮
+  document.querySelector('.log-form-card .btn-primary').setAttribute('onclick', 'submitLog()');
+  renderLogs(); updateStats();
+}
+
+function resetLogForm() {
+  logState.site = '洛谷'; logState.diff = 'easy'; logState.topic = '';
+  document.getElementById('log-pid').value = '';
+  document.getElementById('log-note').value = '';
+  document.getElementById('log-site-custom').style.display = 'none';
+  document.getElementById('log-site-custom').value = '';
+  document.querySelectorAll('#log-site-group .log-opt').forEach((b,i) => b.classList.toggle('active', i===0));
+  document.querySelectorAll('#log-topic-group .log-opt').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#log-diff-group .log-opt').forEach((b,i) => b.classList.toggle('active', i===0));
+}
+
+function delLog(id) {
+  const logs = getLogs().filter(l => l.id !== id);
+  LS.set('logs', logs); renderLogs(); updateStats();
+}
+
+function editLog(id) {
+  const logs = getLogs();
+  const log = logs.find(l => l.id === id);
+  if (!log) return;
+  // 填充表单
+  document.getElementById('log-pid').value = log.pid;
+  document.getElementById('log-note').value = log.note || '';
+  // 平台
+  const siteGroup = document.getElementById('log-site-group');
+  siteGroup.querySelectorAll('.log-opt').forEach(b => {
+    b.classList.toggle('active', b.dataset.val === log.site);
+  });
+  if (['洛谷','力扣','PTA','自定义'].includes(log.site)) {
+    logState.site = log.site;
+  } else {
+    logState.site = '自定义';
+    siteGroup.querySelectorAll('.log-opt').forEach(b => b.classList.toggle('active', b.dataset.val === '自定义'));
+    document.getElementById('log-site-custom').style.display = 'inline-block';
+    document.getElementById('log-site-custom').value = log.site;
+  }
+  // 知识点
+  const topicGroup = document.getElementById('log-topic-group');
+  const topics = (log.topic || '').split(/[,，、]/);
+  topicGroup.querySelectorAll('.log-opt').forEach(b => b.classList.toggle('active', topics.includes(b.dataset.val)));
+  logState.topic = log.topic || '';
+  // 难度
+  document.querySelectorAll('#log-diff-group .log-opt').forEach(b => b.classList.toggle('active', b.dataset.val === log.diff));
+  logState.diff = log.diff;
+  // 滚动到表单
+  document.querySelector('.log-form-card').scrollIntoView({ behavior:'smooth' });
+  // 修改保存按钮为编辑模式
+  document.querySelector('.log-form-card .btn-primary').setAttribute('onclick', `submitLog(${id})`);
+}
+
+function renderLogs() {
+  const logs = getLogs();
+  const list = document.getElementById('log-list');
+  const empty = document.getElementById('log-empty');
+  if (!logs.length) { list.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  const diffMap = { easy:['简单','diff-easy'], med:['中等','diff-med'], hard:['困难','diff-hard'] };
+  list.innerHTML = logs.map(l => {
+    const link = getTaskLink(l.site + l.pid) || getTaskLink(l.pid);
+    return `<div class="log-item" onclick="editLog(${l.id})" title="点击编辑">
+      <div class="log-item-top">
+        <span class="log-item-date">${fmtDate(l.date)}</span>
+        <span class="log-item-site">${esc(l.site)}</span>
+        <strong class="log-item-pid">${link ? `<a href="${link}" target="_blank" onclick="event.stopPropagation()" style="color:inherit;text-decoration:none">${esc(l.pid)} 🔗</a>` : esc(l.pid)}</strong>
+        ${l.topic ? `<span class="log-item-topic">${esc(l.topic)}</span>` : ''}
+        <span class="log-diff ${diffMap[l.diff][1]}">${diffMap[l.diff][0]}</span>
+        <span class="task-del" onclick="event.stopPropagation();delLog(${l.id})">×</span>
+      </div>
+      ${l.note ? `<div class="log-item-note">${esc(l.note)}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// ============ 阶段进度 ============
+const STAGES = [
+  { name:'第一阶段：C语言进阶 + Linux入门', time:'2026暑假', color:1, subs:[
+    '指针深度突破（多级指针、函数指针）','内存管理（malloc/free、内存泄漏）',
+    '结构体与链表手写实现','位操作熟练','多文件编译+Makefile',
+    '项目：通讯录管理系统','Linux环境搭建（WSL/虚拟机）',
+    'Linux基本命令熟练','Shell脚本入门','GCC+GDB调试']},
+  { name:'第二阶段：数据结构 + Linux系统编程', time:'大二上 2026.9-2027.1', color:2, subs:[
+    '链表/栈/队列手写实现','二叉树与二叉搜索树',
+    '哈希表原理与实现','排序算法（快排、归并）',
+    'LeetCode刷50道简单题','Linux进程编程（fork/exec/wait）',
+    '管道与信号机制','多线程编程（pthread）',
+    '项目：多线程Web服务器']},
+  { name:'第三阶段：STM32 + RTOS入门', time:'大二寒假 2027.1-2', color:3, subs:[
+    '开发环境搭建（Keil MDK）','GPIO控制LED+按键输入',
+    'UART串口通信','定时器与中断机制',
+    'I2C/SPI通信基础','项目：串口调试助手',
+    '项目：温湿度监测系统','FreeRTOS多任务入门',
+    'FreeRTOS队列与信号量']},
+  { name:'第四阶段：网络编程 + 单片机进阶', time:'大二下 2027.2-7', color:4, subs:[
+    'TCP/IP协议基础','Socket编程（TCP/UDP）',
+    'TCP三次握手/四次挥手','多路复用（select/poll/epoll）',
+    '项目：多人聊天室','STM32 ADC/DMA进阶',
+    '项目：温湿度远程监控','LeetCode累计100道']},
+  { name:'第五阶段：嵌入式Linux核心', time:'大二暑假 2027.7-8', color:5, subs:[
+    '交叉编译环境搭建','U-Boot编译与烧录',
+    'Linux内核编译配置','设备树（DTS）理解与修改',
+    'Buildroot构建根文件系统','应用层开发（GPIO/UART控制）',
+    '完整系统跑通','项目：智能家居网关雏形']},
+  { name:'第六阶段：驱动开发 + C++ + 项目', time:'大三上 2027.9-2028.1', color:6, subs:[
+    '字符设备驱动框架','platform总线驱动模型',
+    'GPIO/LED驱动实现','I2C/SPI驱动编写',
+    'C++基础（类、继承、虚函数）','智能门锁项目完成',
+    '项目文档+GitHub整理','LeetCode累计150道']},
+  { name:'第七阶段：实习冲刺', time:'大三下 2028.2-7', color:7, subs:[
+    '简历制作（突出项目经验）','GitHub主页整理美化',
+    '面试八股文准备','C语言高频面试题刷完',
+    'LeetCode累计200道','投递第三梯队公司（练手）',
+    '投递一二梯队（字节/海康/大疆）','每次面试后复盘总结']}
+];
+
+function getProgress() { return LS.get('progress', {}) }
+function saveProgress(p) { LS.set('progress', p); renderStages(); }
+
+function toggleSub(stageIdx, subIdx) {
+  const key = stageIdx+'_'+subIdx;
+  const p = getProgress();
+  p[key] = !p[key];
+  saveProgress(p);
+}
+
+function renderStages() {
+  const p = getProgress();
+  const html = STAGES.map((s, si) => {
+    const total = s.subs.length;
+    const done = s.subs.filter((_, i) => p[si+'_'+i]).length;
+    const pct = Math.round(done/total*100);
+    return `<div class="stage-item">
+      <div class="stage-header">
+        <span class="stage-name">${s.name}</span>
+        <span class="stage-pct">${pct}%</span>
+      </div>
+      <div class="stage-time">${s.time} · ${done}/${total} 项完成</div>
+      <div class="progress-bar"><div class="progress-fill pf-${s.color}" style="width:${pct}%"></div></div>
+      <div class="stage-subtasks">${s.subs.map((sub, i) => {
+        const d = p[si+'_'+i];
+        return `<div class="subtask ${d?'done':''}" onclick="toggleSub(${si},${i})">
+          <div class="mini-check ${d?'done':''}">${d?'✓':''}</div>
+          <span class="subtask-text">${sub}</span>
+        </div>`;
+      }).join('')}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('stage-list').innerHTML = html;
+}
+
+// ============ 统计 ============
+function updateStats() {
+  // 连续打卡
+  let streak = 0;
+  const d = new Date();
+  for (let i = 0; i < 365; i++) {
+    const key = d.toISOString().slice(0,10);
+    const tasks = LS.get('tasks_'+key, []);
+    const pomos = LS.get('pomos_'+key, 0);
+    const hasDone = tasks.some(t => t.done) || pomos > 0;
+    if (hasDone || (i === 0 && tasks.length > 0)) { streak++; d.setDate(d.getDate()-1); }
+    else break;
+  }
+  document.getElementById('s-streak').textContent = streak;
+  // 累计任务
+  let totalTasks = 0;
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k.startsWith('elu_tasks_')) {
+      const arr = JSON.parse(localStorage.getItem(k));
+      totalTasks += arr.filter(t => t.done).length;
+    }
+  }
+  document.getElementById('s-tasks').textContent = totalTasks;
+  // 刷题
+  document.getElementById('s-probs').textContent = getLogs().length;
+  // 番茄钟
+  document.getElementById('s-pomos').textContent = LS.get('pomos_total', 0);
+}
+
+// ============ 工具 ============
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+// ============ 每周计划数据 ============
+const WEEKS = [
+  // ===== 学期末：数据结构复习+期末（6/9-6/29）=====
+  { id:0, title:'数据结构复习·链表+栈队列 · 6/9-6/15', phase:'📘 数据结构复习', desc:'每天1道数据结构题+复习期末，本周重点：链表、栈、队列',
+    days:[
+      {name:'周一',tasks:['力扣第206题 反转链表（指针操作必会）','复习期末考试科目']},
+      {name:'周二',tasks:['力扣第21题 合并两个有序链表','复习期末考试科目']},
+      {name:'周三',tasks:['力扣第141题 环形链表（快慢指针）','复习期末考试科目']},
+      {name:'周四',tasks:['力扣第20题 有效的括号（栈经典应用）','复习期末考试科目']},
+      {name:'周五',tasks:['洛谷P1449 后缀表达式（栈应用）','复习期末考试科目']},
+      {name:'周末',tasks:['力扣第155题 最小栈（栈设计）','复习本周所有题+复习期末考试科目']}
+    ]},
+  { id:1, title:'数据结构复习·树+排序 · 6/16-6/22', phase:'📘 数据结构复习', desc:'每天1道数据结构题+复习期末，本周重点：树、排序算法',
+    days:[
+      {name:'周一',tasks:['力扣第94题 二叉树中序遍历（递归）','复习期末考试科目']},
+      {name:'周二',tasks:['力扣第104题 二叉树最大深度','复习期末考试科目']},
+      {name:'周三',tasks:['力扣第101题 对称二叉树','复习期末考试科目']},
+      {name:'周四',tasks:['力扣第226题 翻转二叉树','复习期末考试科目']},
+      {name:'周五',tasks:['洛谷P1305 新二叉树（建树+遍历）','复习期末考试科目']},
+      {name:'周末',tasks:['力扣第215题 第K大元素（快排思想）','复习本周+复习期末考试科目']}
+    ]},
+  { id:2, title:'数据结构·手写冲刺+期末 · 6/23-6/29', phase:'📝 手写冲刺+期末', desc:'每天手写1个数据结构实现（考试可能考手写代码！）+复习期末',
+    days:[
+      {name:'周一',tasks:['手写：单向链表增删改查（闭眼能写）','复习期末考试科目']},
+      {name:'周二',tasks:['手写：栈+队列（数组实现+链表实现）','复习期末考试科目']},
+      {name:'周三',tasks:['手写：二叉树三种遍历（递归+迭代）','复习期末考试科目']},
+      {name:'周四',tasks:['手写：快速排序+归并排序','复习期末考试科目']},
+      {name:'周五',tasks:['洛谷P1177 排序模板题（综合排序）','复习期末考试科目']},
+      {name:'周末',tasks:['复习所有手写代码+错题回顾','全力备考期末考试！']}
+    ]},
+  // ===== 过渡期：每天2道题热身（6/30-7/25）=====
+  { id:3, title:'热身周1 · 6/30-7/6', phase:'🔥 每日刷题热身', desc:'考完试了！每天2道题热身，开始找回编程手感，不用太累',
+    days:[
+      {name:'周一',tasks:['洛谷P1075 质因数分解','洛谷P1003 铺地毯','休息调整，不用太紧张']},
+      {name:'周二',tasks:['洛谷P1217 回文质数','洛谷P1014 Cantor表','回顾C语言指针笔记']},
+      {name:'周三',tasks:['力扣第1题 两数之和','洛谷P1002 过河卒','看B站翁恺C语言1-2集']},
+      {name:'周四',tasks:['力扣第26题 删除有序数组重复项','洛谷P1012 拼数','回顾C语言数组和字符串']},
+      {name:'周五',tasks:['力扣第88题 合并两个有序数组','洛谷P1015 回文数','回顾C语言结构体']},
+      {name:'周末',tasks:['整理本周错题','选做：洛谷P1059 明明的随机数','规划下周学习']}
+    ]},
+  { id:4, title:'热身周2 · 7/7-7/13', phase:'🔥 每日刷题热身', desc:'继续每天2道题，同时复习C语言薄弱知识点',
+    days:[
+      {name:'周一',tasks:['洛谷P1100 高低位交换','力扣第136题 只出现一次的数字','复习：指针基础概念']},
+      {name:'周二',tasks:['洛谷P1042 乒乓球','力扣第35题 搜索插入位置','复习：指针与数组的关系']},
+      {name:'周三',tasks:['洛谷P1009 阶乘之和','力扣第53题 最大子数组和','复习：函数指针']},
+      {name:'周四',tasks:['洛谷P1007 独木桥','力扣第15题 三数之和','复习：malloc和free']},
+      {name:'周五',tasks:['洛谷P1085 不高兴的津津','力扣第66题 加一','复习：结构体内存对齐']},
+      {name:'周末',tasks:['整理本周错题','选做：力扣第283题 移动零','下周开始集中学C了！']}
+    ]},
+  { id:5, title:'热身周3 · 7/14-7/20', phase:'🔥 每日刷题热身', desc:'最后一周热身，开始看《C和指针》书，为暑假集中做准备',
+    days:[
+      {name:'周一',tasks:['洛谷P1083 借教室（二分答案）','力扣第217题 存在重复元素','《C和指针》第1章：C语言概览']},
+      {name:'周二',tasks:['洛谷P1048 采药（DP入门）','力扣第21题 合并两个有序链表','《C和指针》第2章：词汇基础']},
+      {name:'周三',tasks:['洛谷P1060 01背包','力扣第70题 爬楼梯','《C和指针》第3章开始']},
+      {name:'周四',tasks:['洛谷P1101 单词方阵（搜索）','力扣第141题 环形链表','复习：链表概念']},
+      {name:'周五',tasks:['洛谷P1059 明明的随机数','力扣第206题 反转链表（经典）','复习：链表操作']},
+      {name:'周末',tasks:['整理3周以来所有错题','统计刷题数量（目标：30+道）','准备下周开始集中突击C语言！']}
+    ]},
+  { id:6, title:'预热周 · 7/21-7/27', phase:'🔥 C语言预热', desc:'暑假倒计时！这周开始系统学C，每天刷题+看书2-3小时',
+    days:[
+      {name:'周一',tasks:['《C和指针》第4-5章：指针','力扣第2题 两数相加（链表）','写代码：指针交换两个变量']},
+      {name:'周二',tasks:['《C和指针》第6章：数组与指针','洛谷P1217 回文质数','写代码：指针遍历数组求和/最大值']},
+      {name:'周三',tasks:['多级指针（char**的含义）','力扣第28题 实现strStr','写代码：指针版字符串反转']},
+      {name:'周四',tasks:['函数指针与回调函数','洛谷P1068 分数线','写代码：函数指针实现计算器']},
+      {name:'周五',tasks:['指针数组 vs 数组指针','力扣第26题 删除重复项','写代码：用指针操作二维数组']},
+      {name:'周末',tasks:['本周指针知识总结','整理错题本','网购《C和指针》实体书（如果没有）']}
+    ]},
+  // ===== 暑假集中突击（7/28-8/31，5周）=====
+  { id:7, title:'C进阶·Week1 · 7/28-8/3', phase:'💪 暑假C语言突击', desc:'暑假正式开始！每天3-4小时，本周攻克内存管理+结构体',
+    days:[
+      {name:'周一',tasks:['《C和指针》第7章：内存分配malloc/free','洛谷P1047 校门外的树','写代码：用malloc动态分配数组并释放']},
+      {name:'周二',tasks:['内存泄漏原因+检测方法','力扣第2题 两数相加（链表）','写代码：故意制造内存泄漏，理解危害']},
+      {name:'周三',tasks:['结构体内存对齐原理','洛谷P1051 谁拿了最多奖学金','写代码：定义学生结构体数组并排序']},
+      {name:'周四',tasks:['单向链表实现（创建、插入）','力扣第206题 反转链表（必做）','手写链表：完整增删改查']},
+      {name:'周五',tasks:['链表进阶（删除、双向链表）','洛谷P1093 奖学金（多关键字排序）','手写双向链表']},
+      {name:'周末',tasks:['复习：指针+内存+链表总结','整理错题本','选做：力扣第21题 合并两个有序链表']}
+    ]},
+  { id:8, title:'C进阶·Week2 · 8/4-8/10', phase:'💪 暑假C语言突击', desc:'本周攻克位操作+文件操作+多文件编译',
+    days:[
+      {name:'周一',tasks:['位操作基础（与或非、移位、掩码）','洛谷P1100 高低位交换','写代码：用位操作判断奇偶/2的幂']},
+      {name:'周二',tasks:['位操作进阶（置位、清位、翻转位）','力扣第136题 只出现一次的数字（异或）','写代码：用位掩码实现简易权限']},
+      {name:'周三',tasks:['文件操作（fopen/fread/fwrite/fclose）','洛谷P1002 过河卒','写代码：文本文件读写练习']},
+      {name:'周四',tasks:['文件操作进阶（fseek/ftell）','力扣第28题 实现strStr','写代码：实现简易CSV解析器']},
+      {name:'周五',tasks:['多文件编译（.h/.c分离、extern）','洛谷P1104 生日（综合排序）','写代码：把链表代码拆成多文件+Makefile']},
+      {name:'周末',tasks:['复习位操作+文件+多文件','整理工具链笔记','选做：力扣第15题 三数之和']}
+    ]},
+  { id:9, title:'C进阶·Week3 · 8/11-8/17', phase:'💪 暑假项目实战', desc:'通讯录项目实战！整合指针、链表、文件、多文件所有知识',
+    days:[
+      {name:'周一',tasks:['项目设计：规划通讯录数据结构+模块划分','写代码：定义联系人结构体+链表','洛谷P1060 01背包（DP入门）']},
+      {name:'周二',tasks:['写代码：实现添加/删除/修改联系人','力扣第141题 环形链表（快慢指针）','复习：指针和链表']},
+      {name:'周三',tasks:['写代码：实现文件保存/加载（持久化）','洛谷P1048 采药（DP练习）','复习：文件操作']},
+      {name:'周四',tasks:['写代码：实现搜索/排序/显示功能','力扣第70题 爬楼梯（递归/DP）','复习：结构体和排序']},
+      {name:'周五',tasks:['项目整合：菜单交互+错误处理+边界测试','洛谷P1101 单词方阵（搜索）','写Makefile编译整个项目']},
+      {name:'周末',tasks:['项目完善：代码优化+注释补充','写README上传GitHub','本周复盘：C语言阶段总结']}
+    ]},
+  { id:10, title:'Linux入门·Week4 · 8/18-8/24', phase:'🐧 Linux入门', desc:'搭建Linux环境，学习基本命令+Makefile+GCC+GDB+Shell',
+    days:[
+      {name:'周一',tasks:['安装WSL2或虚拟机+Ubuntu','基本命令：ls/cd/pwd/mkdir/rm/cp/mv','洛谷P1003 铺地毯']},
+      {name:'周二',tasks:['文件查看：cat/head/tail/grep/wc','管道和重定向：| > >> < 2>','力扣第53题 最大子数组和']},
+      {name:'周三',tasks:['权限管理：chmod/chown','GCC编译：gcc -c -o -g -O','在Linux下编译运行通讯录项目']},
+      {name:'周四',tasks:['GDB调试：break/run/next/step/print','Makefile基础（规则、变量）','给通讯录项目写Makefile']},
+      {name:'周五',tasks:['Shell脚本入门（变量、条件、循环）','写一个自动编译+测试的脚本','洛谷P1042 乒乓球']},
+      {name:'周末',tasks:['在Linux下用vim编辑代码','复习所有命令和工具','整理Linux笔记']},
+    ]},
+  { id:11, title:'收尾总结·Week5 · 8/25-8/31', phase:'🏁 暑假收尾', desc:'最后一周！完善项目、整理GitHub、准备开学',
+    days:[
+      {name:'周一',tasks:['完善通讯录项目：添加更多实用功能','洛谷P1007 独木桥（贪心）','复习C语言易错点']},
+      {name:'周二',tasks:['完善GitHub仓库：README+架构图+截图','力扣第283题 移动零','复习：手写链表（闭眼能写）']},
+      {name:'周三',tasks:['整理所有刷题记录（目标：50+道）','洛谷P1085 不高兴的津津','复习：指针+内存管理']},
+      {name:'周四',tasks:['写C语言学习总结博客','力扣第88题 合并两个有序数组','复习：结构体+文件操作']},
+      {name:'周五',tasks:['制定大二上学习计划（第二阶段）','洛谷P1083 借教室（二分答案）','整理所有错题本']},
+      {name:'周末',tasks:['暑假总复盘：统计刷题数/项目/时间','准备开学，调整作息','目标：开学后每天保持1-2小时']}
+    ]}
+];
+
+// ============ 每周计划渲染 ============
+function initWeekSelect() {
+  const sel = document.getElementById('week-select');
+  const saved = LS.get('current_week', 0);
+  sel.innerHTML = WEEKS.map(w => `<option value="${w.id}" ${w.id===saved?'selected':''}>第${w.id+1}周：${w.title}</option>`).join('');
+}
+
+function renderWeekPlan() {
+  const sel = document.getElementById('week-select');
+  const wId = parseInt(sel.value);
+  LS.set('current_week', wId);
+  const w = WEEKS[wId];
+  if (!w) return;
+  let html = `<div class="week-desc"><strong>${w.phase}</strong> — ${w.desc}</div>`;
+  w.days.forEach(d => {
+    html += `<div class="day-card"><h3>${d.name} <span class="day-label">${w.phase}</span></h3>`;
+    d.tasks.forEach(t => {
+      const isCode = t.startsWith('写代码') || t.startsWith('项目') || t.startsWith('完善') || t.startsWith('写');
+      const isOJ = t.startsWith('洛谷') || t.startsWith('力扣');
+      const isBook = t.startsWith('《') || t.startsWith('复习') || t.startsWith('看书');
+      const icon = isOJ ? '💻' : isCode ? '🔧' : isBook ? '📖' : '📝';
+      html += `<div class="day-task"><span class="dt-icon">${icon}</span>${esc(t)}</div>`;
+    });
+    html += '</div>';
+  });
+  document.getElementById('week-detail').innerHTML = html;
+}
+
+function loadWeekTasks() {
+  const sel = document.getElementById('week-select');
+  const wId = parseInt(sel.value);
+  const w = WEEKS[wId];
+  if (!w) return;
+  // 获取今天是周几（0=周日，转为1=周一）
+  const dow = new Date().getDay() || 7;
+  const dayIdx = Math.min(dow - 1, w.days.length - 1);
+  const dayPlan = w.days[dayIdx];
+  const tasks = getTasks();
+  let added = 0;
+  dayPlan.tasks.forEach(t => {
+    if (!tasks.some(x => x.text === t)) {
+      const isOJ = t.startsWith('洛谷') || t.startsWith('力扣');
+      tasks.push({ id: Date.now() + added, text: t, pri: isOJ ? 'must' : 'try', done: false });
+      added++;
+    }
+  });
+  if (added > 0) {
+    saveTasks(tasks);
+    alert(`已加载${dayPlan.name}的${added}个任务到今日任务！`);
+    // 自动跳转到任务页
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('page-tasks').classList.add('active');
+    document.querySelectorAll('.nav-btn')[1].classList.add('active');
+  } else {
+    alert('今天的任务已经全部加载过了！');
+  }
+}
+
+// ============ 初始化 ============
+initWeekSelect(); renderWeekPlan();
+renderTasks(); renderLogs(); renderStages(); renderPomoStats(); updateStats();
+</script>
+</body>
+</html>
